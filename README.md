@@ -20,5 +20,11 @@ AI-powered walking city guide that plans and adapts your route in any city.
 - `backend/`: Spring Boot server
 - `docs/`: use case diagram, Figma exports, documentation
 
+## Prototype
+UI prototype designed in Figma (work in progress):
+
+![Rovelo UI prototype](docs/Revelo.png)
+
+
 ## Status
-Course project (PAAM). Design and use case diagram done; implementation in progress.
+Course project (PAAM). UI prototype and use case diagram done; implementation in progress.
