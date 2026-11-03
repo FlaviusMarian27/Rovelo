@@ -23,7 +23,7 @@ AI-powered walking city guide that plans and adapts your route in any city.
 ## Prototype
 UI prototype designed in Figma (work in progress):
 
-![Rovelo UI prototype](docs/Revelo.png)
+![Rovelo UI prototype](docs/Rovelo.png)
 
 
 ## Status
