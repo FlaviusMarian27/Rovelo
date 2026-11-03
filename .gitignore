@@ -1,0 +1,13 @@
+# Secrets (API keys, passwords)
+.env
+.env.*
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
