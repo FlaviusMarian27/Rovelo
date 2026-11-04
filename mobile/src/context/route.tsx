@@ -2,7 +2,7 @@
 // spre backend (care vorbește cu agentul AI).
 import { createContext, useContext, useState, type PropsWithChildren } from 'react';
 
-import { mockRoute } from '@/data/mock';
+import { mockRouteFor } from '@/data/mock';
 import type { Route, WalkPreferences } from '@/types';
 
 type RouteState = {
@@ -21,7 +21,7 @@ export function RouteProvider({ children }: PropsWithChildren) {
   async function generateRoute(prefs: WalkPreferences) {
     setGenerating(true);
     await new Promise((r) => setTimeout(r, 1200)); // simulează "agentul gândește"
-    const route: Route = { ...mockRoute, duration: prefs.duration };
+    const route = mockRouteFor(prefs.duration);
     setActiveRoute(route);
     setGenerating(false);
     return route;
