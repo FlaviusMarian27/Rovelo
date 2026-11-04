@@ -1,86 +1,56 @@
-# Rovelo
+# Welcome to your Expo app 👋
 
-AI-powered walking city guide that plans and adapts your route in any city.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-> **Vibe-coded project.** Rovelo is built through *vibe coding*: most of the code is written
-> together with an AI coding assistant (Claude), from my prompts, decisions and design.
-> I define the product, the Figma design and the architecture, review every change and test
-> each screen on a real phone before committing.
+## Get started
 
-## How it works
-- Pick how much time you have and what interests you
-- An AI agent builds a walking route from OpenStreetMap data
-- Navigate live; the agent replans if you run late
-- Photograph a building to get its story
+1. Install dependencies
 
-## What works today (mobile, with mock data)
-The mobile UI is implemented end to end. The backend and the AI agent are not built yet, so
-routes, replanning and landmark recognition return mock data from one place
-(`mobile/src/services/agent.ts`), shaped like the future API responses.
+   ```bash
+   npm install
+   ```
 
-- **Launch:** animated splash built from the app icon (steps walk in, the pin drops)
-- **Auth:** Welcome, Log in, Create account, Continue as guest (simulated in memory);
-  animated transition into the app (a red circle grows from your tap, shrinks into the Home tab)
-- **Home / Preferences:** time (1h / 2h / 3h+), interests, starting point, *Generate route*
-- **Your route:** map with the walking line and numbered stops, stop list with walk time
-  between stops, total time and distance; routes can have any number of stops
-- **Live navigation:**
-  - GPS position on the map, *Stop X of N*, next-stop card with distance and direction
-  - arrival detection (30 m), auto-continue when you leave a stop
-  - progress kept when leaving the screen (*Resume route*)
-  - demo mode that simulates the walk, to test without being in the city
-- **Running late + Replan with AI:** detects when you fall behind the plan, proposes a
-  shorter route (*Updated route: removed X, saved N min*) with Accept / Keep original
-- **Scan a building:** full-screen camera or gallery → *Place story* with your photo,
-  the story of the place, *Add to route*, *Save*, *Share*
-- **Saved** (saved places) and **Profile** (account details, Log out)
+2. Start the app
 
-### Design decisions so far
-- The **order of stops is chosen by whoever creates the route**; the app keeps it and only
-  computes the walk between stops.
-- The map uses the **native map** (Google Maps on Android, Apple Maps on iOS) with a minimal
-  light style; route data comes from OpenStreetMap through the backend.
-- One red from the app icon (`#BF1C21`), all colors in `mobile/src/constants/theme.ts`.
+   ```bash
+   npx expo start
+   ```
 
-## Tech stack
-- **Mobile:** React Native with Expo (SDK 58), expo-router, TypeScript
-  - react-native-maps, expo-location, expo-camera, Reanimated, Lucide icons
-- **Backend (planned):** Spring Boot (Java), REST API, JWT auth
-- **Database (planned):** PostgreSQL
-- **AI (planned):** pre-trained model called through an API with tool calling
-  (`search_places`, `build_route`, `get_current_location_context`, `recognize_landmark`,
-  `save_trip`); the API key stays on the server
-- **Maps data:** OpenStreetMap
+In the output, you'll find options to open the app in a
 
-## Project structure
-- `mobile/`: React Native app
-  - `src/app/`: screens (expo-router): `(auth)`, `(tabs)` with Home · Route · Saved · Profile, `scan`
-  - `src/components/`: UI building blocks and the route map
-  - `src/context/`: session (auth) and route state (active route, walk progress, saved places)
-  - `src/services/agent.ts`: mock "agent" calls, to be replaced by backend calls
-  - `src/data/mock.ts`: mock places and routes in Timișoara (the test city)
-- `backend/`: Spring Boot server (not started yet)
-- `docs/`: use case diagram, Figma exports, app icon
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-## Run it
+You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Get a fresh project
+
+When you're ready, run:
+
 ```bash
-cd mobile
-npm install
-npx expo start --tunnel
+npm run reset-project
 ```
-Scan the QR code with **Expo Go** (Android / iOS). Demo account: `demo@rovelo.app` /
-`rovelo123`, or *Continue as guest*. Far from Timișoara? Start a route and tap
-*Simulate walk*.
 
-## Prototype
-UI prototype designed in Figma:
+This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
 
-![Rovelo UI prototype](docs/Rovelo.png)
+### Other setup steps
 
-## Status
-Course project (PAAM, UPT).
-- [x] Use case diagram and Figma prototype
-- [x] Mobile UI with mock data (all main screens)
-- [ ] Backend: auth (JWT), PostgreSQL, routes API
-- [ ] AI agent with OpenStreetMap tools (route generation, replanning, landmark recognition)
-- [ ] Social: share routes, *For you* / *Friends* feed
+- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
+- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
+- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+
+## Learn more
+
+To learn more about developing your project with Expo, look at the following resources:
+
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
