@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
     "@expo/ui": "~58.0.26",
+    "@expo/vector-icons": "^15.0.2",
     "expo": "~58.0.22",
     "expo-constants": "~58.0.14",
     "expo-device": "~58.0.5",
@@ -33,7 +35,6 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
