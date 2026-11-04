@@ -13,6 +13,7 @@ import { AnimatedSplash } from '@/components/animated-splash';
 import { colors } from '@/constants/theme';
 import { RouteProvider } from '@/context/route';
 import { SessionProvider, useSession } from '@/context/session';
+import { TransitionProvider } from '@/context/transition';
 
 // Splash-ul nativ rămâne până îl ascunde AnimatedSplash (după ce s-au încărcat fonturile).
 SplashScreen.preventAutoHideAsync();
@@ -30,7 +31,9 @@ export default function RootLayout() {
   return (
     <SessionProvider>
       <StatusBar style={splashDone ? 'dark' : 'light'} />
-      <RootStack />
+      <TransitionProvider>
+        <RootStack />
+      </TransitionProvider>
       {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
     </SessionProvider>
   );

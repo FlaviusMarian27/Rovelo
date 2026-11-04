@@ -12,10 +12,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { useTransition } from '@/context/transition';
 
 export default function ProfileScreen() {
-  const { user, signOut } = useSession();
+  const { user, signOut: endSession } = useSession();
+  const { exit } = useTransition();
   if (!user) return null;
+
+  const signOut = () => exit(endSession);
 
   const initials = user.name
     .split(' ')

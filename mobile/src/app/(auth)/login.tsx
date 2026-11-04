@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, type GestureResponderEvent } from 'react-native';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
@@ -7,16 +7,19 @@ import { FooterLink } from '@/components/ui/footer-link';
 import { Input } from '@/components/ui/input';
 import { colors, fonts, fontSize } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { touchPoint, useTransition } from '@/context/transition';
 import { isValidEmail } from '@/utils/validation';
 
 export default function LoginScreen() {
-  const { signIn } = useSession();
+  const { signIn, startSession } = useSession();
+  const { enter } = useTransition();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit() {
+  async function onSubmit(e?: GestureResponderEvent) {
+    const origin = touchPoint(e); // citit înainte de await
     const next: typeof errors = {};
     if (!isValidEmail(email)) next.email = 'Enter a valid email.';
     if (!password) next.password = 'Enter your password.';
@@ -26,8 +29,9 @@ export default function LoginScreen() {
     setLoading(true);
     const res = await signIn(email, password);
     setLoading(false);
-    // La succes, Stack.Protected te duce singur în app.
-    if (!res.ok) setErrors({ form: res.error });
+    if (!res.ok) return setErrors({ form: res.error });
+    // Animația acoperă ecranul, apoi pornește sesiunea → Stack.Protected te duce în app.
+    enter(origin, () => startSession(res.user));
   }
 
   return (
@@ -56,7 +60,7 @@ export default function LoginScreen() {
         autoComplete="current-password"
         textContentType="password"
         returnKeyType="go"
-        onSubmitEditing={onSubmit}
+        onSubmitEditing={() => onSubmit()}
         error={errors.password}
       />
 

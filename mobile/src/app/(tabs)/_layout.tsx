@@ -6,9 +6,7 @@ import { colors, fonts } from '@/constants/theme';
 
 const icon =
   (Icon: LucideIcon) =>
-  ({ color }: { color: ColorValue }) => (
-    <Icon size={24} color={String(color)} strokeWidth={1.75} />
-  );
+  ({ color }: { color: ColorValue }) => <Icon size={24} color={String(color)} strokeWidth={1.75} />;
 
 export default function TabsLayout() {
   return (

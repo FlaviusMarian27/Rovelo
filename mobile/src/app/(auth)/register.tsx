@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, type GestureResponderEvent } from 'react-native';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
@@ -7,19 +7,22 @@ import { FooterLink } from '@/components/ui/footer-link';
 import { Input } from '@/components/ui/input';
 import { colors, fonts, fontSize } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { touchPoint, useTransition } from '@/context/transition';
 import { isValidEmail, MIN_PASSWORD } from '@/utils/validation';
 
 type Errors = { name?: string; email?: string; password?: string; form?: string };
 
 export default function RegisterScreen() {
-  const { signUp } = useSession();
+  const { signUp, startSession } = useSession();
+  const { enter } = useTransition();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit() {
+  async function onSubmit(e?: GestureResponderEvent) {
+    const origin = touchPoint(e);
     const next: Errors = {};
     if (!name.trim()) next.name = 'Enter your name.';
     if (!isValidEmail(email)) next.email = 'Enter a valid email.';
@@ -30,7 +33,8 @@ export default function RegisterScreen() {
     setLoading(true);
     const res = await signUp(name, email, password);
     setLoading(false);
-    if (!res.ok) setErrors({ form: res.error });
+    if (!res.ok) return setErrors({ form: res.error });
+    enter(origin, () => startSession(res.user));
   }
 
   return (
@@ -70,7 +74,7 @@ export default function RegisterScreen() {
         autoComplete="new-password"
         textContentType="newPassword"
         returnKeyType="go"
-        onSubmitEditing={onSubmit}
+        onSubmitEditing={() => onSubmit()}
         hint={`Use at least ${MIN_PASSWORD} characters.`}
         error={errors.password}
       />

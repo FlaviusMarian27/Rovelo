@@ -1,11 +1,18 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type GestureResponderEvent,
+} from 'react-native';
 
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 
 type Props = {
   title: string;
-  onPress: () => void;
+  onPress: (e: GestureResponderEvent) => void;
   variant?: 'primary' | 'outline' | 'text';
   icon?: LucideIcon;
   loading?: boolean;

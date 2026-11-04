@@ -6,9 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { touchPoint, useTransition } from '@/context/transition';
 
 export default function WelcomeScreen() {
   const { continueAsGuest } = useSession();
+  const { enter } = useTransition();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -26,7 +28,11 @@ export default function WelcomeScreen() {
       <View style={styles.actions}>
         <Button title="Log in" onPress={() => router.push('/login')} />
         <Button title="Create account" variant="outline" onPress={() => router.push('/register')} />
-        <Button title="Continue as guest" variant="text" onPress={continueAsGuest} />
+        <Button
+          title="Continue as guest"
+          variant="text"
+          onPress={(e) => enter(touchPoint(e), continueAsGuest)}
+        />
       </View>
     </SafeAreaView>
   );

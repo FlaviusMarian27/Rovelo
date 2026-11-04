@@ -1,16 +1,20 @@
 // Auth simulat, în memorie. Când apare backend-ul Spring Boot,
 // se schimbă doar funcțiile de aici (signIn / signUp / signOut) cu apeluri API.
+//
+// signIn / signUp doar verifică și întorc user-ul; sesiunea pornește abia la startSession.
+// Așa ecranul poate rula întâi animația de intrare și schimbă user-ul când ecranul e acoperit.
 import { createContext, useContext, useState, type PropsWithChildren } from 'react';
 
 import { mockAccounts } from '@/data/mock';
 import type { User } from '@/types';
 
-type Result = { ok: true } | { ok: false; error: string };
+type Result = { ok: true; user: User } | { ok: false; error: string };
 
 type Session = {
   user: User | null;
   signIn: (email: string, password: string) => Promise<Result>;
   signUp: (name: string, email: string, password: string) => Promise<Result>;
+  startSession: (user: User) => void;
   continueAsGuest: () => void;
   signOut: () => void;
 };
@@ -31,8 +35,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     if (!acc || acc.password !== password) {
       return { ok: false, error: 'Wrong email or password.' };
     }
-    setUser({ id: acc.id, name: acc.name, email: acc.email, isGuest: false });
-    return { ok: true };
+    return { ok: true, user: { id: acc.id, name: acc.name, email: acc.email, isGuest: false } };
   }
 
   async function signUp(name: string, email: string, password: string): Promise<Result> {
@@ -43,8 +46,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
     }
     const acc = { id: `u${accounts.length + 1}`, name: name.trim(), email: clean, password };
     accounts.push(acc);
-    setUser({ id: acc.id, name: acc.name, email: acc.email, isGuest: false });
-    return { ok: true };
+    return { ok: true, user: { id: acc.id, name: acc.name, email: acc.email, isGuest: false } };
+  }
+
+  function startSession(u: User) {
+    setUser(u);
   }
 
   function continueAsGuest() {
@@ -56,7 +62,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }
 
   return (
-    <SessionContext.Provider value={{ user, signIn, signUp, continueAsGuest, signOut }}>
+    <SessionContext.Provider
+      value={{ user, signIn, signUp, startSession, continueAsGuest, signOut }}>
       {children}
     </SessionContext.Provider>
   );
