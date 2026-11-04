@@ -1,20 +1,33 @@
 // react-native-maps nu merge pe web. Variantă simplă (doar ca bundle-ul web să nu crape):
-// desenează linia și pinii proiectați pe un dreptunghi.
+// desenează linia, pinii și poziția proiectate pe un dreptunghi.
 import { useImperativeHandle, type Ref } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { colors } from '@/constants/theme';
-import type { Route } from '@/types';
+import type { Coord, Route } from '@/types';
 
-export type RouteMapHandle = { focusStop: (index: number) => void };
+export type RouteMapHandle = {
+  focusStop: (index: number) => void;
+  centerOn: (c: Coord, zoom?: number) => void;
+  fitRoute: () => void;
+};
 
-export function RouteMap({ route, ref }: { route: Route; ref?: Ref<RouteMapHandle> }) {
-  useImperativeHandle(ref, () => ({ focusStop: () => {} }));
+type Props = {
+  route: Route;
+  ref?: Ref<RouteMapHandle>;
+  userPosition?: Coord | null;
+  currentIndex?: number;
+  edgePadding?: { top: number; right: number; bottom: number; left: number };
+  onUserPan?: () => void;
+};
+
+export function RouteMap({ route, ref, userPosition, currentIndex, edgePadding }: Props) {
+  useImperativeHandle(ref, () => ({ focusStop: () => {}, centerOn: () => {}, fitRoute: () => {} }));
 
   const W = 400;
-  const H = 240;
-  const pad = 30;
+  const H = edgePadding ? 800 : 240;
+  const pad = edgePadding ? { t: 260, b: 220, x: 50 } : { t: 30, b: 30, x: 30 };
   const lats = route.path.map((c) => c.latitude);
   const lngs = route.path.map((c) => c.longitude);
   const [minLat, maxLat, minLng, maxLng] = [
@@ -23,15 +36,21 @@ export function RouteMap({ route, ref }: { route: Route; ref?: Ref<RouteMapHandl
     Math.min(...lngs),
     Math.max(...lngs),
   ];
-  const sx = (W - 2 * pad) / (maxLng - minLng || 1);
-  const sy = (H - 2 * pad) / (maxLat - minLat || 1);
-  const s = Math.min(sx, sy);
+  const s = Math.min(
+    (W - 2 * pad.x) / (maxLng - minLng || 1),
+    (H - pad.t - pad.b) / (maxLat - minLat || 1),
+  );
+  const cy = pad.t + (H - pad.t - pad.b) / 2;
   const x = (lng: number) => W / 2 + (lng - (minLng + maxLng) / 2) * s;
-  const y = (lat: number) => H / 2 - (lat - (minLat + maxLat) / 2) * s;
+  const y = (lat: number) => cy - (lat - (minLat + maxLat) / 2) * s;
 
   return (
     <View style={styles.wrap}>
-      <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}>
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid slice">
         <Polyline
           points={route.path.map((c) => `${x(c.longitude)},${y(c.latitude)}`).join(' ')}
           fill="none"
@@ -39,13 +58,15 @@ export function RouteMap({ route, ref }: { route: Route; ref?: Ref<RouteMapHandl
           strokeWidth={4}
           strokeLinejoin="round"
         />
-        {route.stops.map((st) => (
+        {route.stops.map((st, i) => (
           <Circle
             key={st.id}
             cx={x(st.coord.longitude)}
             cy={y(st.coord.latitude)}
-            r={13}
-            fill={colors.primary}
+            r={currentIndex === i ? 16 : 13}
+            fill={
+              currentIndex !== undefined && i < currentIndex ? colors.textMuted : colors.primary
+            }
             stroke="#fff"
             strokeWidth={2}
           />
@@ -62,6 +83,24 @@ export function RouteMap({ route, ref }: { route: Route; ref?: Ref<RouteMapHandl
             {String(i + 1)}
           </SvgText>
         ))}
+        {userPosition && (
+          <>
+            <Circle
+              cx={x(userPosition.longitude)}
+              cy={y(userPosition.latitude)}
+              r={18}
+              fill={colors.userLocationHalo}
+            />
+            <Circle
+              cx={x(userPosition.longitude)}
+              cy={y(userPosition.latitude)}
+              r={8}
+              fill={colors.userLocation}
+              stroke="#fff"
+              strokeWidth={3}
+            />
+          </>
+        )}
       </Svg>
     </View>
   );

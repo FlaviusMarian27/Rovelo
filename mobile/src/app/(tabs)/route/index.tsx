@@ -2,7 +2,7 @@
 import { router } from 'expo-router';
 import { Footprints, Navigation } from 'lucide-react-native';
 import { Fragment, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
@@ -66,7 +66,7 @@ export default function RouteScreen() {
         <Button
           title="Start route"
           icon={Navigation}
-          onPress={() => Alert.alert('Start route', 'Live navigation comes next.')}
+          onPress={() => router.push('/route/navigation')}
         />
       </View>
     </SafeAreaView>

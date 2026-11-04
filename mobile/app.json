@@ -26,6 +26,12 @@
       "expo-router",
       "expo-font",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Rovelo uses your location to guide you along your walk."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#BF1C21",

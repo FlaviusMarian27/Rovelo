@@ -40,6 +40,30 @@ export function buildRoute(
   };
 }
 
+// Direcția de la a spre b, în grade (0 = nord, 90 = est).
+export function bearing(a: Coord, b: Coord) {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const dLng = rad(b.longitude - a.longitude);
+  const y = Math.sin(dLng) * Math.cos(rad(b.latitude));
+  const x =
+    Math.cos(rad(a.latitude)) * Math.sin(rad(b.latitude)) -
+    Math.sin(rad(a.latitude)) * Math.cos(rad(b.latitude)) * Math.cos(dLng);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+// Punctul aflat la fracția t (0..1) pe segmentul a → b.
+export function lerp(a: Coord, b: Coord, t: number): Coord {
+  return {
+    latitude: a.latitude + (b.latitude - a.latitude) * t,
+    longitude: a.longitude + (b.longitude - a.longitude) * t,
+  };
+}
+
+export function formatDistance(m: number) {
+  if (m < 1000) return `${Math.round(m / 10) * 10} m`;
+  return `${(m / 1000).toFixed(m < 10_000 ? 1 : 0)} km`;
+}
+
 export function formatMinutes(min: number) {
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);

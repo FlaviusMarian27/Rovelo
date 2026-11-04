@@ -16,6 +16,10 @@ export const colors = {
   textMuted: '#A1A1AA',
 
   error: '#BF1C21',
+
+  // Punctul albastru "tu ești aici" de pe hartă (convenția din toate aplicațiile de hărți)
+  userLocation: '#2F6FED',
+  userLocationHalo: 'rgba(47, 111, 237, 0.18)',
 } as const;
 
 export const spacing = {
