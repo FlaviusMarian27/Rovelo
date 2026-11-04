@@ -94,18 +94,18 @@ function Navigation({ route }: { route: Route }) {
         )}
       </SafeAreaView>
 
-      <View style={styles.sideButtons} pointerEvents="box-none">
-        <RoundButton icon={Crosshair} label="Center on me" onPress={recenter} />
-        <Pressable
-          onPress={() => Alert.alert('Scan a building', 'Coming next.')}
-          accessibilityRole="button"
-          accessibilityLabel="Scan a building"
-          style={({ pressed }) => [styles.cameraButton, pressed && { opacity: 0.85 }]}>
-          <Camera size={24} color={colors.onPrimary} strokeWidth={1.75} />
-        </Pressable>
-      </View>
-
+      {/* Jos: butoanele în dreapta, deasupra eventualului card → urcă singure când apare cardul */}
       <View style={styles.bottom} pointerEvents="box-none">
+        <View style={styles.sideButtons} pointerEvents="box-none">
+          <RoundButton icon={Crosshair} label="Center on me" onPress={recenter} />
+          <Pressable
+            onPress={() => Alert.alert('Scan a building', 'Coming next.')}
+            accessibilityRole="button"
+            accessibilityLabel="Scan a building"
+            style={({ pressed }) => [styles.cameraButton, pressed && { opacity: 0.85 }]}>
+            <Camera size={24} color={colors.onPrimary} strokeWidth={1.75} />
+          </Pressable>
+        </View>
         {renderBottomCard()}
       </View>
     </View>
@@ -313,13 +313,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     overflow: 'hidden',
   },
-  sideButtons: {
-    position: 'absolute',
-    right: spacing.md,
-    bottom: 230,
-    gap: spacing.md,
-    alignItems: 'flex-end',
-  },
+  sideButtons: { alignSelf: 'flex-end', alignItems: 'center', gap: spacing.md - 4 },
   cameraButton: {
     width: 56,
     height: 56,
@@ -329,6 +323,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow,
   },
-  bottom: { position: 'absolute', left: spacing.md, right: spacing.md, bottom: spacing.md },
+  bottom: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    gap: spacing.md,
+  },
   bottomCard: { marginTop: 0 },
 });
