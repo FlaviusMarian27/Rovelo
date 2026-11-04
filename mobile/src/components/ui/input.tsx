@@ -1,4 +1,4 @@
-import Feather from '@expo/vector-icons/Feather';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
@@ -18,12 +18,7 @@ export function Input({ label, hint, error, password, style, ...rest }: Props) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
-      <View
-        style={[
-          styles.field,
-          focused && styles.fieldFocused,
-          !!error && styles.fieldError,
-        ]}>
+      <View style={[styles.field, focused && styles.fieldFocused, !!error && styles.fieldError]}>
         <TextInput
           {...rest}
           style={[styles.input, style]}
@@ -45,7 +40,11 @@ export function Input({ label, hint, error, password, style, ...rest }: Props) {
             onPress={() => setHidden((h) => !h)}
             hitSlop={12}
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}>
-            <Feather name={hidden ? 'eye' : 'eye-off'} size={20} color={colors.textSecondary} />
+            {hidden ? (
+              <Eye size={20} color={colors.textSecondary} />
+            ) : (
+              <EyeOff size={20} color={colors.textSecondary} />
+            )}
           </Pressable>
         )}
       </View>

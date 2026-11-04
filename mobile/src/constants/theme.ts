@@ -3,6 +3,7 @@
 export const colors = {
   primary: '#BF1C21', // roșul din iconiță (docs/icon.png)
   primaryPressed: '#A3171B',
+  primarySoft: '#FBEBEC', // fundal deschis pentru iconițe/badge-uri roșii
   onPrimary: '#FFFFFF',
 
   background: '#FFFFFF',

@@ -1,4 +1,4 @@
-import Feather from '@expo/vector-icons/Feather';
+import { ArrowLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -12,7 +12,7 @@ export function BackButton() {
       accessibilityRole="button"
       accessibilityLabel="Back"
       style={({ pressed }) => [styles.button, pressed && { opacity: 0.5 }]}>
-      <Feather name="arrow-left" size={24} color={colors.text} />
+      <ArrowLeft size={24} color={colors.text} />
     </Pressable>
   );
 }
