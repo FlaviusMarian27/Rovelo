@@ -1,15 +1,18 @@
-// Harta traseului: tile-uri OpenStreetMap (stil CARTO light, alb, ca în Figma),
+// Harta traseului: harta nativă (Google pe Android, Apple pe iOS) cu stil alb, minimal,
 // linia roșie prin opriri și pini numerotați. Merge cu oricâte opriri.
+//
+// De ce nu tile-uri OSM: CARTO cere acum cheie, iar tile.openstreetmap.org nu permite
+// aplicații fără User-Agent propriu. Datele traseului rămân din OpenStreetMap (backend).
 import { useImperativeHandle, useRef, type Ref } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
+import { StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
+import { mapStyleLight } from '@/constants/map-style';
 import { colors, fonts } from '@/constants/theme';
 import type { Route } from '@/types';
 
 export type RouteMapHandle = { focusStop: (index: number) => void };
 
-const TILE_URL = 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png';
 const EDGE_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
 
 type Props = { route: Route; ref?: Ref<RouteMapHandle> };
@@ -33,8 +36,9 @@ export function RouteMap({ route, ref }: Props) {
       <MapView
         ref={map}
         style={StyleSheet.absoluteFill}
-        // Pe Android "none" = fără hartă Google sub tile-uri; pe iOS tile-urile o înlocuiesc.
-        mapType={Platform.OS === 'android' ? 'none' : 'standard'}
+        customMapStyle={mapStyleLight} // Android (Google); pe iOS se ignoră
+        mapType="mutedStandard" // iOS: hartă mai ștearsă; Android o tratează ca standard
+        userInterfaceStyle="light"
         initialRegion={{
           ...coords[0],
           latitudeDelta: 0.01,
@@ -42,11 +46,13 @@ export function RouteMap({ route, ref }: Props) {
         }}
         onMapReady={fitAll}
         showsPointsOfInterests={false}
+        showsBuildings={false}
         showsCompass={false}
+        showsTraffic={false}
+        showsIndoors={false}
         toolbarEnabled={false}
         rotateEnabled={false}
         pitchEnabled={false}>
-        <UrlTile urlTemplate={TILE_URL} maximumZ={19} shouldReplaceMapContent tileSize={256} />
         <Polyline
           coordinates={route.path}
           strokeColor={colors.primary}
@@ -62,7 +68,6 @@ export function RouteMap({ route, ref }: Props) {
           </Marker>
         ))}
       </MapView>
-      <Text style={styles.attribution}>© OpenStreetMap © CARTO</Text>
     </View>
   );
 }
@@ -80,13 +85,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pinText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.onPrimary },
-  attribution: {
-    position: 'absolute',
-    left: 6,
-    bottom: 4,
-    fontSize: 9,
-    color: colors.textSecondary,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    paddingHorizontal: 3,
-  },
 });
