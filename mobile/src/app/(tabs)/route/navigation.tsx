@@ -1,14 +1,22 @@
-// Live navigation: harta pe tot ecranul, poziția ta, "Stop X of N", cardul spre oprirea următoare.
+// Live navigation: harta pe tot ecranul, poziția ta, "Stop X of N", cardul spre oprirea următoare,
+// bannerul "You're running late" și Replan with AI.
 // Poziția vine din GPS sau din modul demo (simulează mersul pe traseu, pentru test de acasă).
+// Progresul stă în context (useRoute().walk), deci rămâne când ieși și revii.
 import { Redirect, router } from 'expo-router';
 import {
   ArrowLeft,
   ArrowUp,
   Camera,
+  Clock,
   Crosshair,
   Ellipsis,
   Flag,
   MapPinOff,
+  Navigation as NavIcon,
+  PlayCircle,
+  Sparkles,
+  Timer,
+  X,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -17,33 +25,91 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
 import { Button } from '@/components/ui/button';
+import { Menu, type MenuItem } from '@/components/ui/menu';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
-import { useRoute } from '@/context/route';
+import { useRoute, type WalkState } from '@/context/route';
 import { useGpsPosition, useSimulatedPosition } from '@/hooks/use-position';
 import { useWalkProgress } from '@/hooks/use-walk-progress';
+import { replanRoute, type ReplanResult } from '@/services/agent';
 import type { Route } from '@/types';
 import { bearing, distanceMeters, formatDistance, formatMinutes } from '@/utils/geo';
+import { roughMinutes, shouldShowLate } from '@/utils/schedule';
 
 const FAR_FROM_ROUTE_M = 3000; // mai departe de atât → îți propunem modul demo
 
 export default function NavigationScreen() {
-  const { activeRoute } = useRoute();
+  const { activeRoute, walk, beginWalk } = useRoute();
+
+  // Pornește mersul (sau îl continuă dacă ai mai fost pe ecran cu aceeași rută).
+  useEffect(() => {
+    beginWalk();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRoute?.id]);
+
   // ex. după reload: fără traseu nu avem ce naviga
   if (!activeRoute) return <Redirect href="/route" />;
-  return <Navigation route={activeRoute} />;
+  if (!walk || walk.routeId !== activeRoute.id) return <View style={styles.screen} />;
+  return <Navigation route={activeRoute} walkState={walk} />;
 }
 
-function Navigation({ route }: { route: Route }) {
-  const [demo, setDemo] = useState(false);
+function Navigation({ route, walkState }: { route: Route; walkState: WalkState }) {
+  const { setDemo, addDelay, snoozeLate, endWalk, replaceRoute } = useRoute();
+  const demo = walkState.demo;
   const [following, setFollowing] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [replanning, setReplanning] = useState(false);
+  const [proposal, setProposal] = useState<ReplanResult | null>(null);
   const mapRef = useRef<RouteMapHandle>(null);
 
   const gps = useGpsPosition(!demo);
-  const simulated = useSimulatedPosition(route, demo);
+  // demo: pornește de la ultima oprire atinsă, nu de la capăt
+  const simFrom = walkState.phase === 'walking' ? walkState.index - 1 : walkState.index;
+  const simulated = useSimulatedPosition(route, demo, simFrom);
   const position = demo ? simulated : gps.position;
 
-  const walk = useWalkProgress(route, position);
+  const walk = useWalkProgress(route, walkState, position);
   const far = !!position && distanceMeters(position, walk.target.coord) > FAR_FROM_ROUTE_M;
+  const showLate = shouldShowLate(walk.late, walkState.snoozedLate);
+
+  async function onReplan() {
+    if (walk.late === null) return;
+    setReplanning(true);
+    const result = await replanRoute(route, walk.index, walk.late);
+    setReplanning(false);
+    if (result) setProposal(result);
+    else {
+      Alert.alert('Nothing left to cut', 'This is already the shortest version of your walk.');
+      snoozeLate(walk.late);
+    }
+  }
+
+  function acceptProposal() {
+    if (!proposal) return;
+    if (demo) addDelay(-Math.min(walkState.delayMin, proposal.savedMin));
+    replaceRoute(proposal.route);
+    setProposal(null);
+  }
+
+  function keepOriginal() {
+    if (walk.late !== null) snoozeLate(walk.late);
+    setProposal(null);
+  }
+
+  const menuItems: MenuItem[] = [
+    demo
+      ? { label: 'Use real GPS', icon: NavIcon, onPress: () => setDemo(false) }
+      : { label: 'Simulate walk (demo)', icon: PlayCircle, onPress: () => setDemo(true) },
+    ...(demo ? [{ label: 'Simulate 10 min delay', icon: Timer, onPress: () => addDelay(10) }] : []),
+    {
+      label: 'End route',
+      icon: X,
+      danger: true,
+      onPress: () => {
+        endWalk();
+        router.back();
+      },
+    },
+  ];
 
   // Harta te urmărește cât timp nu ai mutat-o tu (și ești lângă traseu).
   useEffect(() => {
@@ -55,16 +121,6 @@ function Navigation({ route }: { route: Route }) {
     if (position && !far) mapRef.current?.centerOn(position, 16.5);
     else mapRef.current?.fitRoute();
   };
-
-  const openMenu = () =>
-    Alert.alert(route.title, undefined, [
-      {
-        text: demo ? 'Use real GPS' : 'Simulate walk (demo)',
-        onPress: () => setDemo((d) => !d),
-      },
-      { text: 'End route', style: 'destructive', onPress: () => router.back() },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
 
   const n = route.stops.length;
   const stopLabel = walk.phase === 'finished' ? 'Route complete' : `Stop ${walk.index + 1} of ${n}`;
@@ -86,7 +142,7 @@ function Navigation({ route }: { route: Route }) {
           <View style={styles.pill}>
             <Text style={styles.pillText}>{stopLabel}</Text>
           </View>
-          <RoundButton icon={Ellipsis} label="Route options" onPress={openMenu} />
+          <RoundButton icon={Ellipsis} label="Route options" onPress={() => setMenuOpen(true)} />
         </View>
 
         {walk.phase !== 'finished' && (
@@ -99,7 +155,7 @@ function Navigation({ route }: { route: Route }) {
         <View style={styles.sideButtons} pointerEvents="box-none">
           <RoundButton icon={Crosshair} label="Center on me" onPress={recenter} />
           <Pressable
-            onPress={() => Alert.alert('Scan a building', 'Coming next.')}
+            onPress={() => router.push('/scan')}
             accessibilityRole="button"
             accessibilityLabel="Scan a building"
             style={({ pressed }) => [styles.cameraButton, pressed && { opacity: 0.85 }]}>
@@ -108,6 +164,8 @@ function Navigation({ route }: { route: Route }) {
         </View>
         {renderBottomCard()}
       </View>
+
+      <Menu visible={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
     </View>
   );
 
@@ -115,7 +173,31 @@ function Navigation({ route }: { route: Route }) {
     if (walk.phase === 'finished') {
       return (
         <BottomCard icon={Flag} title="Nice walk!" text={`${n} stops · ${route.distanceKm} km`}>
-          <Button title="Back to route" onPress={() => router.back()} />
+          <Button
+            title="Back to route"
+            onPress={() => {
+              endWalk();
+              router.back();
+            }}
+          />
+        </BottomCard>
+      );
+    }
+    if (proposal) {
+      const names = proposal.removed.map((s) => s.name).join(', ');
+      return (
+        <BottomCard
+          icon={Sparkles}
+          title="Updated route"
+          text={`Removed ${names} · saved ${proposal.savedMin} min`}>
+          <View style={styles.row}>
+            <View style={styles.flex}>
+              <Button title="Keep original" variant="outline" onPress={keepOriginal} />
+            </View>
+            <View style={styles.flex}>
+              <Button title="Accept" onPress={acceptProposal} />
+            </View>
+          </View>
         </BottomCard>
       );
     }
@@ -148,6 +230,22 @@ function Navigation({ route }: { route: Route }) {
           title="You're far from this route"
           text="Walk over to the first stop, or preview the route with a simulated walk.">
           <Button title="Simulate walk" variant="outline" onPress={() => setDemo(true)} />
+        </BottomCard>
+      );
+    }
+    if (showLate && walk.late !== null) {
+      return (
+        <BottomCard
+          icon={Clock}
+          title={`You're running ${roughMinutes(walk.late)} late`}
+          text="Keep the highlights. Shorten the walk."
+          onDismiss={() => snoozeLate(walk.late ?? 0)}>
+          <Button
+            title={replanning ? 'Replanning…' : 'Replan with AI'}
+            icon={Sparkles}
+            loading={replanning}
+            onPress={onReplan}
+          />
         </BottomCard>
       );
     }
@@ -211,11 +309,13 @@ function BottomCard({
   icon: Icon,
   title,
   text,
+  onDismiss,
   children,
 }: {
   icon?: LucideIcon;
   title: string;
   text: string;
+  onDismiss?: () => void;
   children?: ReactNode;
 }) {
   return (
@@ -223,6 +323,11 @@ function BottomCard({
       <View style={styles.cardRow}>
         {Icon && <Icon size={20} color={colors.text} strokeWidth={1.75} />}
         <Text style={styles.cardTitle}>{title}</Text>
+        {onDismiss && (
+          <Pressable onPress={onDismiss} hitSlop={12} accessibilityLabel="Not now">
+            <X size={18} color={colors.textMuted} />
+          </Pressable>
+        )}
       </View>
       <Text style={[styles.cardSub, { marginBottom: spacing.md }]}>{text}</Text>
       {children}
@@ -331,4 +436,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   bottomCard: { marginTop: 0 },
+  row: { flexDirection: 'row', gap: spacing.sm + 2 },
+  flex: { flex: 1 },
 });

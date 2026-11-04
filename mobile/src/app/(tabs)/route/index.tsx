@@ -1,6 +1,6 @@
 // Fără traseu: "No route yet". Cu traseu: harta + lista de opriri, în ordinea de parcurgere.
 import { router } from 'expo-router';
-import { Footprints, Navigation } from 'lucide-react-native';
+import { ChevronRight, Footprints, Navigation } from 'lucide-react-native';
 import { Fragment, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import type { Leg, Stop } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function RouteScreen() {
-  const { activeRoute } = useRoute();
+  const { activeRoute, walk } = useRoute();
   const mapRef = useRef<RouteMapHandle>(null);
   const [focused, setFocused] = useState<number | null>(null);
 
@@ -32,6 +32,8 @@ export default function RouteScreen() {
   }
 
   const r = activeRoute;
+  const inProgress =
+    walk?.routeId === r.id && walk.phase !== 'finished' && (walk.index > 0 || !!walk.startedAt);
   const onStopPress = (i: number) => {
     setFocused(i);
     mapRef.current?.focusStop(i);
@@ -64,7 +66,7 @@ export default function RouteScreen() {
 
       <View style={styles.bottom}>
         <Button
-          title="Start route"
+          title={inProgress ? `Resume route · stop ${walk!.index + 1}` : 'Start route'}
           icon={Navigation}
           onPress={() => router.push('/route/navigation')}
         />
@@ -90,6 +92,14 @@ function StopRow({ stop, index, active, onPress }: StopRowProps) {
         <Text style={styles.stopBlurb}>{stop.blurb}</Text>
       </View>
       <Text style={styles.stopMin}>{stop.visitMinutes} min</Text>
+      <Pressable
+        onPress={() => router.push({ pathname: '/route/place/[id]', params: { id: stop.id } })}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={`Read the story of ${stop.name}`}
+        style={styles.storyButton}>
+        <ChevronRight size={18} color={colors.textMuted} />
+      </Pressable>
     </Pressable>
   );
 }
@@ -153,6 +163,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   stopMin: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.textSecondary },
+  storyButton: { marginLeft: -4, paddingVertical: 4 },
   leg: {
     flexDirection: 'row',
     alignItems: 'center',

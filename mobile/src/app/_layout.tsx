@@ -58,6 +58,11 @@ function RootStack() {
         </Stack.Protected>
         <Stack.Protected guard={!!user}>
           <Stack.Screen name="(tabs)" />
+          {/* Camera: full-screen, peste taburi */}
+          <Stack.Screen
+            name="scan"
+            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+          />
         </Stack.Protected>
       </Stack>
     </RouteProvider>

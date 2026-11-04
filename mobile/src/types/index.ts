@@ -51,3 +51,11 @@ export type Route = {
   totalMinutes: number; // opriri + mers
   distanceKm: number;
 };
+
+// Povestea unui loc (Place story).
+export type PlaceStory = {
+  category: string;
+  area: string;
+  story: string;
+  tip: string;
+};

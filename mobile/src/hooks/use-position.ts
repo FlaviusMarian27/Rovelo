@@ -50,9 +50,12 @@ const DEMO_SPEED_M_PER_TICK = 10; // ~50 m/s: un traseu de 2 km în ~40 s
 const DEMO_PAUSE_MS = 4000; // cât "stai" la fiecare oprire
 
 // Mod demo: un punct care merge pe `route.path` și se oprește puțin la fiecare oprire.
-export function useSimulatedPosition(route: Route, enabled: boolean) {
+// `fromStop`: de la ce oprire pornește (ca la revenirea pe ecran să nu o ia de la capăt).
+export function useSimulatedPosition(route: Route, enabled: boolean, fromStop = 0) {
   const [position, setPosition] = useState<Coord | null>(null);
   const state = useRef({ seg: 0, meters: 0, pauseUntil: 0 });
+  const startRef = useRef(fromStop);
+  startRef.current = fromStop;
 
   useEffect(() => {
     if (!enabled) {
@@ -60,8 +63,10 @@ export function useSimulatedPosition(route: Route, enabled: boolean) {
       return;
     }
     const path = route.path;
-    state.current = { seg: 0, meters: 0, pauseUntil: Date.now() + 1500 };
-    setPosition(path[0]);
+    // path = punctele opririlor deocamdată → indexul opririi = indexul în path
+    const seg = Math.min(Math.max(0, startRef.current), path.length - 1);
+    state.current = { seg, meters: 0, pauseUntil: Date.now() + 1500 };
+    setPosition(path[seg]);
 
     const id = setInterval(() => {
       const s = state.current;

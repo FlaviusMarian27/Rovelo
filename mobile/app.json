@@ -32,6 +32,18 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Rovelo uses the camera to recognize buildings and tell you their story."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rovelo lets you pick a photo of a building to learn its story."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#BF1C21",

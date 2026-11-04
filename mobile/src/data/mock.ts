@@ -1,6 +1,6 @@
 // Date false până există backend-ul și agentul AI.
 // Coordonatele sunt reale (aproximativ) în Timișoara.
-import type { Duration, Interest, Route, StartPoint, Stop } from '@/types';
+import type { Duration, Interest, PlaceStory, Route, StartPoint, Stop } from '@/types';
 import { buildRoute } from '@/utils/geo';
 
 // Cont demo ca să poți intra direct cu Log in.
@@ -28,7 +28,7 @@ export const startPoints: StartPoint[] = [
 export const currentCity = 'Timișoara';
 
 // Locuri (ce va întoarce search_places din OpenStreetMap).
-const places = {
+export const places = {
   opera: {
     id: 'opera',
     name: 'Opera Națională',
@@ -115,3 +115,66 @@ const routesByDuration: Record<Duration, Route> = {
 export function mockRouteFor(duration: Duration): Route {
   return routesByDuration[duration];
 }
+
+export function findPlace(id: string): Stop | undefined {
+  return (places as Record<string, Stop>)[id];
+}
+
+// Poveștile locurilor (ce va scrie agentul după recognize_landmark).
+export const placeStories: Record<string, PlaceStory> = {
+  catedrala: {
+    category: 'Architecture · Local landmark',
+    area: 'Piața Victoriei · Timișoara',
+    story:
+      'Look up: eleven towers rise above the square, their patterned roofs catching the light. Built between 1936 and 1946, the cathedral brings Moldavian tradition to the heart of the Banat. Step closer to discover its mosaics and a quieter side of the city.',
+    tip: 'Best seen in the warm light of late afternoon.',
+  },
+  victoriei: {
+    category: 'History · City square',
+    area: 'Cetate · Timișoara',
+    story:
+      'A long pedestrian square between the Opera and the Cathedral, lined with Secession-era palaces. In December 1989 it filled with tens of thousands of people — the square where the revolution grew.',
+    tip: 'Walk it slowly and look at the façades above the shop signs.',
+  },
+  opera: {
+    category: 'History · Architecture',
+    area: 'Piața Victoriei · Timișoara',
+    story:
+      'The National Theatre and Opera closes Piața Victoriei to the north. From its balcony, in December 1989, Timișoara was declared the first free city in Romania.',
+    tip: 'Stand in the middle of the square to see it framed by the Cathedral behind you.',
+  },
+  libertatii: {
+    category: 'History · City square',
+    area: 'Cetate · Timișoara',
+    story:
+      'A small square tucked between the two big ones, home to the old Town Hall. Easy to walk past — worth a pause.',
+    tip: 'A good spot for a short break in the shade.',
+  },
+  unirii: {
+    category: 'Architecture · Baroque square',
+    area: 'Cetate · Timișoara',
+    story:
+      'Pastel façades, the Roman-Catholic Dom on one side and the Baroque Palace on the other. In the middle, the Holy Trinity column remembers the plague years of the 18th century.',
+    tip: 'Come back after dark when the façades are lit.',
+  },
+  bastion: {
+    category: 'History · Fortifications',
+    area: 'Cetate · Timișoara',
+    story:
+      'The largest surviving piece of the 18th-century citadel that once ringed the old town. Today its vaults hold cafés, shops and a small museum.',
+    tip: 'Walk through the inner courtyard, not just past the walls.',
+  },
+  cafe: {
+    category: 'Coffee · Slow discoveries',
+    area: 'Cetate · Timișoara',
+    story: 'A small local café — the kind of place for a slow coffee and a little people-watching.',
+    tip: 'Ask what the locals order.',
+  },
+  rozelor: {
+    category: 'Parks · Riverside',
+    area: 'Bega · Timișoara',
+    story:
+      'A rose garden next to the Bega, with paths, benches and a summer stage. A quiet moment after the busy squares.',
+    tip: 'Best in late spring, when the roses are in bloom.',
+  },
+};
