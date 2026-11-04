@@ -7,11 +7,13 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useState } from 'react';
 
+import { AnimatedSplash } from '@/components/animated-splash';
 import { colors } from '@/constants/theme';
 import { SessionProvider, useSession } from '@/context/session';
 
+// Splash-ul nativ rămâne până îl ascunde AnimatedSplash (după ce s-au încărcat fonturile).
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -20,17 +22,15 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
   });
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync();
-  }, [fontsLoaded, fontError]);
+  const [splashDone, setSplashDone] = useState(false);
 
   if (!fontsLoaded && !fontError) return null;
 
   return (
     <SessionProvider>
-      <StatusBar style="dark" />
+      <StatusBar style={splashDone ? 'dark' : 'light'} />
       <RootStack />
+      {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
     </SessionProvider>
   );
 }
