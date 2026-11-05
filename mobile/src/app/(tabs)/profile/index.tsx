@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import {
   ChevronRight,
   LogOut,
@@ -15,11 +16,16 @@ import { useSession } from '@/context/session';
 import { useTransition } from '@/context/transition';
 
 export default function ProfileScreen() {
-  const { user, signOut: endSession } = useSession();
+  const { user, signOut: endSession, deleteAccount } = useSession();
   const { exit } = useTransition();
   if (!user) return null;
 
   const signOut = () => exit(endSession);
+  const confirmDelete = () =>
+    Alert.alert('Delete account?', 'Your account and saved walks will be removed.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => exit(deleteAccount) },
+    ]);
 
   const initials = user.name
     .split(' ')
@@ -27,7 +33,6 @@ export default function ProfileScreen() {
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const soon = (what: string) => () => Alert.alert(what, 'Coming soon.');
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -51,16 +56,10 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <View style={styles.list}>
-            <Row icon={Pencil} label="Edit profile" onPress={soon('Edit profile')} />
-            <Row icon={SlidersHorizontal} label="Preferences" onPress={soon('Preferences')} />
+            <Row icon={Pencil} label="Edit profile" onPress={() => router.push('/profile/edit')} />
+            <Row icon={SlidersHorizontal} label="Preferences" onPress={() => router.navigate('/home')} />
             <Row icon={LogOut} label="Log out" onPress={signOut} />
-            <Row
-              icon={Trash2}
-              label="Delete account"
-              danger
-              onPress={soon('Delete account')}
-              last
-            />
+            <Row icon={Trash2} label="Delete account" danger onPress={confirmDelete} last />
           </View>
         )}
       </ScrollView>

@@ -17,6 +17,8 @@ type Session = {
   startSession: (user: User) => void;
   continueAsGuest: () => void;
   signOut: () => void;
+  updateProfile: (name: string, email: string) => Promise<Result>;
+  deleteAccount: () => void;
 };
 
 const SessionContext = createContext<Session | null>(null);
@@ -61,9 +63,38 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setUser(null);
   }
 
+  async function updateProfile(name: string, email: string): Promise<Result> {
+    await delay(400);
+    if (!user || user.isGuest) return { ok: false, error: 'Create an account first.' };
+    const clean = email.trim().toLowerCase();
+    if (accounts.some((a) => a.id !== user.id && a.email.toLowerCase() === clean)) {
+      return { ok: false, error: 'An account with this email already exists.' };
+    }
+    const acc = accounts.find((a) => a.id === user.id);
+    if (acc) Object.assign(acc, { name: name.trim(), email: clean });
+    const updated = { ...user, name: name.trim(), email: clean };
+    setUser(updated);
+    return { ok: true, user: updated };
+  }
+
+  function deleteAccount() {
+    const i = accounts.findIndex((a) => a.id === user?.id);
+    if (i >= 0) accounts.splice(i, 1);
+    setUser(null);
+  }
+
   return (
     <SessionContext.Provider
-      value={{ user, signIn, signUp, startSession, continueAsGuest, signOut }}>
+      value={{
+        user,
+        signIn,
+        signUp,
+        startSession,
+        continueAsGuest,
+        signOut,
+        updateProfile,
+        deleteAccount,
+      }}>
       {children}
     </SessionContext.Provider>
   );
