@@ -1,0 +1,21 @@
+# Valorile secrete vin din backend/.env (vezi .env.example), nu se scriu aici.
+spring:
+  application:
+    name: rovelo-backend
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    # Deocamdată Hibernate creează / actualizează tabelele singur.
+    # Când schema se stabilizează, trecem pe migrații (Flyway).
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+server:
+  port: 8080
+  # 0.0.0.0 = accesibil și din rețeaua locală (telefonul cu Expo Go), nu doar de pe laptop
+  address: 0.0.0.0

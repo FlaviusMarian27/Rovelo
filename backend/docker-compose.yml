@@ -1,0 +1,25 @@
+# PostgreSQL pentru dezvoltare locală.
+# Pornește: docker compose up -d     Oprește: docker compose down
+# Datele rămân în volumul "rovelo-db" și după restart.
+# User / parolă / nume DB vin din fișierul .env (copiat din .env.example, NU intră în git).
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: rovelo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - rovelo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rovelo-db:

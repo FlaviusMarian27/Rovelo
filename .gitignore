@@ -1,6 +1,7 @@
 # Secrets (API keys, passwords)
 .env
 .env.*
+!.env.example
 *.pem
 
 # OS files
@@ -11,3 +12,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.iml
+
+# Build output (Maven)
+target/
