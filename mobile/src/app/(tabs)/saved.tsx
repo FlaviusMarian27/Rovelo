@@ -1,25 +1,44 @@
-// Saved: deocamdată locurile salvate din Place story (în memorie).
-// Rutele salvate (cardurile din Figma) vin când avem backend-ul.
+// Saved: rutele salvate (din Your route, iconița cu semn de carte) și locurile salvate
+// (din Place story). Deocamdată în memorie; cu backend-ul vor fi pe cont.
 import { router } from 'expo-router';
 import { Bookmark, ChevronRight, Landmark } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { RouteThumb } from '@/components/route/route-thumb';
 import { EmptyState } from '@/components/ui/empty-state';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
 import { findPlace, placeStories } from '@/data/mock';
+import type { Route } from '@/types';
+import { formatMinutes } from '@/utils/geo';
 
 export default function SavedScreen() {
-  const { savedPlaces } = useRoute();
+  const { savedPlaces, savedRoutes, openRoute, activeRoute, walk } = useRoute();
   const places = savedPlaces.map(findPlace).filter((p) => !!p);
+  const empty = places.length === 0 && savedRoutes.length === 0;
+
+  function open(route: Route) {
+    const walking =
+      !!walk && walk.routeId === activeRoute?.id && walk.phase !== 'finished' && !!walk.startedAt;
+    const go = () => {
+      openRoute(route);
+      router.navigate('/route');
+    };
+    if (walking && activeRoute?.id !== route.id) {
+      Alert.alert('Switch route?', 'Your current walk will stop.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Open route', onPress: go },
+      ]);
+    } else go();
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Text style={styles.title}>Saved</Text>
       <Text style={styles.sub}>Good walks are worth keeping.</Text>
 
-      {places.length === 0 ? (
+      {empty ? (
         <EmptyState
           icon={Bookmark}
           title="Nothing saved yet"
@@ -28,29 +47,77 @@ export default function SavedScreen() {
         />
       ) : (
         <ScrollView contentContainerStyle={styles.list}>
-          <Text style={styles.section}>Places · {places.length}</Text>
+          {savedRoutes.length > 0 && (
+            <Text style={styles.section}>Routes · {savedRoutes.length}</Text>
+          )}
+          {savedRoutes.map((r) => (
+            <Card
+              key={r.id}
+              onPress={() => open(r)}
+              thumb={<RouteThumb route={r} />}
+              title={r.title}
+              meta={`${formatMinutes(r.totalMinutes)} · ${r.stops.length} stops`}
+              tags={r.tags?.join(' · ')}
+            />
+          ))}
+
+          {places.length > 0 && (
+            <Text style={[styles.section, savedRoutes.length > 0 && { marginTop: spacing.md }]}>
+              Places · {places.length}
+            </Text>
+          )}
           {places.map((p) => (
-            <Pressable
+            <Card
               key={p.id}
               onPress={() => router.push({ pathname: '/route/place/[id]', params: { id: p.id } })}
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.card,
-                pressed && { backgroundColor: colors.surface },
-              ]}>
-              <View style={styles.thumb}>
-                <Landmark size={24} color={colors.primary} strokeWidth={1.5} />
-              </View>
-              <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{p.name}</Text>
-                <Text style={styles.cardMeta}>{placeStories[p.id]?.category}</Text>
-              </View>
-              <ChevronRight size={18} color={colors.textMuted} />
-            </Pressable>
+              thumb={
+                <View style={styles.placeThumb}>
+                  <Landmark size={26} color={colors.primary} strokeWidth={1.5} />
+                </View>
+              }
+              title={p.name}
+              meta={`${p.visitMinutes} min visit`}
+              tags={placeStories[p.id]?.category}
+            />
           ))}
         </ScrollView>
       )}
     </SafeAreaView>
+  );
+}
+
+function Card({
+  onPress,
+  thumb,
+  title,
+  meta,
+  tags,
+}: {
+  onPress: () => void;
+  thumb: React.ReactNode;
+  title: string;
+  meta: string;
+  tags?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.card, pressed && { backgroundColor: colors.surface }]}>
+      {thumb}
+      <View style={styles.cardText}>
+        <Text style={styles.cardTitle} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={styles.cardMeta}>{meta}</Text>
+        {!!tags && (
+          <Text style={styles.cardTags} numberOfLines={1}>
+            {tags}
+          </Text>
+        )}
+      </View>
+      <ChevronRight size={18} color={colors.textMuted} />
+    </Pressable>
   );
 }
 
@@ -85,9 +152,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  thumb: {
-    width: 56,
-    height: 56,
+  placeThumb: {
+    width: 72,
+    height: 72,
     borderRadius: radius.md,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
@@ -96,9 +163,15 @@ const styles = StyleSheet.create({
   cardText: { flex: 1 },
   cardTitle: { fontFamily: fonts.semibold, fontSize: fontSize.md, color: colors.text },
   cardMeta: {
-    marginTop: 2,
+    marginTop: 4,
     fontFamily: fonts.regular,
-    fontSize: fontSize.xs + 1,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
+  },
+  cardTags: {
+    marginTop: 4,
+    fontFamily: fonts.regular,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
 });
