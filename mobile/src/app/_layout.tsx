@@ -8,6 +8,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplash } from '@/components/animated-splash';
 import { colors } from '@/constants/theme';
@@ -29,13 +30,16 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <SessionProvider>
-      <StatusBar style={splashDone ? 'dark' : 'light'} />
-      <TransitionProvider>
-        <RootStack />
-      </TransitionProvider>
-      {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
-    </SessionProvider>
+    // Necesar pentru gesturi (ex. tragerea opririlor pe Your route)
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SessionProvider>
+        <StatusBar style={splashDone ? 'dark' : 'light'} />
+        <TransitionProvider>
+          <RootStack />
+        </TransitionProvider>
+        {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
+      </SessionProvider>
+    </GestureHandlerRootView>
   );
 }
 

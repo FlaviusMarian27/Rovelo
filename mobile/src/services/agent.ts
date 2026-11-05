@@ -47,9 +47,9 @@ export async function replanRoute(
   }
 
   if (!removed.length) return null;
-  const { title, duration, pace } = route;
+  const { title, duration, pace, tags } = route;
   return {
-    route: buildRoute({ id: `${route.id}~${removed.length}`, title, duration, pace }, stops),
+    route: buildRoute({ id: `${route.id}~${removed.length}`, title, duration, pace, tags }, stops),
     removed,
     savedMin: saved,
   };

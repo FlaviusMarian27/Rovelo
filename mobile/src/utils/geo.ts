@@ -23,7 +23,7 @@ export function estimateLeg(a: Coord, b: Coord): Leg {
 
 // Construiește o rută completă din opriri, păstrând ordinea dată.
 export function buildRoute(
-  meta: Pick<Route, 'id' | 'title' | 'duration' | 'pace'>,
+  meta: Pick<Route, 'id' | 'title' | 'duration' | 'pace' | 'tags'>,
   stops: Stop[],
 ): Route {
   const legs = stops.slice(1).map((s, i) => estimateLeg(stops[i].coord, s.coord));

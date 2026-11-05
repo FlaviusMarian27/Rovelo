@@ -1,8 +1,20 @@
-// Fără traseu: "No route yet". Cu traseu: harta + lista de opriri, în ordinea de parcurgere.
+// Your route: harta + lista de opriri, în ordinea de parcurgere.
+// Edit: tragi de mâner ca să schimbi ordinea sau scoți opriri; harta și timpii se recalculează pe loc.
+// Ordinea o alege cine creează ruta → aplicația doar arată cât costă schimbarea față de sugestie.
 import { router } from 'expo-router';
-import { ChevronRight, Footprints, Navigation } from 'lucide-react-native';
+import {
+  Bookmark,
+  BookmarkCheck,
+  ChevronRight,
+  Footprints,
+  GripVertical,
+  Navigation,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react-native';
 import { Fragment, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import ReorderableList, { reorderItems, useReorderableDrag } from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
@@ -10,13 +22,14 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
-import type { Leg, Stop } from '@/types';
+import type { Leg, Route, Stop } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function RouteScreen() {
-  const { activeRoute, walk } = useRoute();
+  const { activeRoute, walk, suggestedRoute, isRouteSaved, toggleSavedRoute } = useRoute();
   const mapRef = useRef<RouteMapHandle>(null);
   const [focused, setFocused] = useState<number | null>(null);
+  const [editing, setEditing] = useState(false);
 
   if (!activeRoute) {
     return (
@@ -34,6 +47,7 @@ export default function RouteScreen() {
   const r = activeRoute;
   const inProgress =
     walk?.routeId === r.id && walk.phase !== 'finished' && (walk.index > 0 || !!walk.startedAt);
+  const saved = isRouteSaved(r.id);
   const onStopPress = (i: number) => {
     setFocused(i);
     mapRef.current?.focusStop(i);
@@ -41,39 +55,190 @@ export default function RouteScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Text style={styles.header}>Your route</Text>
+      <View style={styles.headerRow}>
+        <Pressable
+          onPress={() => toggleSavedRoute(r)}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'Remove from saved' : 'Save route'}
+          style={styles.headerSide}>
+          {saved ? (
+            <BookmarkCheck size={22} color={colors.primary} strokeWidth={1.75} />
+          ) : (
+            <Bookmark size={22} color={colors.text} strokeWidth={1.75} />
+          )}
+        </Pressable>
+        <Text style={styles.header}>{editing ? 'Edit route' : 'Your route'}</Text>
+        <View style={[styles.headerSide, { alignItems: 'flex-end' }]}>
+          {!inProgress && (
+            <Pressable
+              onPress={() => setEditing((e) => !e)}
+              hitSlop={10}
+              accessibilityRole="button">
+              <Text style={styles.headerAction}>{editing ? 'Done' : 'Edit'}</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
 
       <View style={styles.map}>
-        {/* key: harta se reface când se schimbă ruta (alt număr de opriri, alt cadru) */}
+        {/* key: harta se reface când se schimbă ruta (altă ordine, alt număr de opriri) */}
         <RouteMap key={r.id} ref={mapRef} route={r} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>{r.title}</Text>
-        <Text style={styles.meta}>
-          {formatMinutes(r.totalMinutes)} · {r.distanceKm} km · {r.stops.length} stops · {r.pace}
-        </Text>
+      {editing ? (
+        <EditStops route={r} suggested={suggestedRoute} onDone={() => setEditing(false)} />
+      ) : (
+        <>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <RouteSummary route={r} />
+            <View style={styles.stops}>
+              {r.stops.map((s, i) => (
+                <Fragment key={s.id}>
+                  <StopRow
+                    stop={s}
+                    index={i}
+                    active={focused === i}
+                    onPress={() => onStopPress(i)}
+                  />
+                  {r.legs[i] && <LegRow leg={r.legs[i]} />}
+                </Fragment>
+              ))}
+            </View>
+          </ScrollView>
 
-        <View style={styles.stops}>
-          {r.stops.map((s, i) => (
-            <Fragment key={s.id}>
-              <StopRow stop={s} index={i} active={focused === i} onPress={() => onStopPress(i)} />
-              {r.legs[i] && <LegRow leg={r.legs[i]} />}
-            </Fragment>
-          ))}
-        </View>
-      </ScrollView>
-
-      <View style={styles.bottom}>
-        <Button
-          title={inProgress ? `Resume route · stop ${walk!.index + 1}` : 'Start route'}
-          icon={Navigation}
-          onPress={() => router.push('/route/navigation')}
-        />
-      </View>
+          <View style={styles.bottom}>
+            <Button
+              title={inProgress ? `Resume route · stop ${walk!.index + 1}` : 'Start route'}
+              icon={Navigation}
+              onPress={() => router.push('/route/navigation')}
+            />
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
+
+function RouteSummary({ route: r }: { route: Route }) {
+  return (
+    <>
+      <Text style={styles.title}>{r.title}</Text>
+      <Text style={styles.meta}>
+        {formatMinutes(r.totalMinutes)} · {r.distanceKm} km · {r.stops.length} stops · {r.pace}
+      </Text>
+    </>
+  );
+}
+
+// ---------- Edit: reordonare prin tragere + ștergere ----------
+
+function EditStops({
+  route: r,
+  suggested,
+  onDone,
+}: {
+  route: Route;
+  suggested: Route | null;
+  onDone: () => void;
+}) {
+  const { setStops, resetToSuggested } = useRoute();
+  const changed = !!suggested && suggested.id !== r.id;
+  const diff = suggested ? r.totalMinutes - suggested.totalMinutes : 0;
+  const diffText =
+    diff === 0
+      ? 'same time as suggested'
+      : `${diff > 0 ? '+' : '−'}${Math.abs(diff)} min vs suggested`;
+
+  return (
+    <>
+      <ReorderableList
+        data={r.stops}
+        keyExtractor={(s) => s.id}
+        onReorder={({ from, to }) => setStops(reorderItems(r.stops, from, to))}
+        renderItem={({ item, index }) => (
+          <EditStopRow
+            stop={item}
+            index={index}
+            canRemove={r.stops.length > 1}
+            onRemove={() => setStops(r.stops.filter((s) => s.id !== item.id))}
+          />
+        )}
+        ListHeaderComponent={
+          <View style={styles.editHeader}>
+            <RouteSummary route={r} />
+            <Text style={styles.hint}>Hold ⠿ and drag to change the order.</Text>
+          </View>
+        }
+        contentContainerStyle={styles.editList}
+        style={styles.flex}
+      />
+
+      <View style={styles.bottom}>
+        {changed && (
+          <View style={styles.diffRow}>
+            <Text style={[styles.diffText, diff > 0 && styles.diffWorse]}>{diffText}</Text>
+            <Pressable
+              onPress={resetToSuggested}
+              hitSlop={8}
+              accessibilityRole="button"
+              style={styles.reset}>
+              <RotateCcw size={14} color={colors.primary} />
+              <Text style={styles.resetText}>Reset to suggested</Text>
+            </Pressable>
+          </View>
+        )}
+        <Button title="Done" onPress={onDone} />
+      </View>
+    </>
+  );
+}
+
+function EditStopRow({
+  stop,
+  index,
+  canRemove,
+  onRemove,
+}: {
+  stop: Stop;
+  index: number;
+  canRemove: boolean;
+  onRemove: () => void;
+}) {
+  const drag = useReorderableDrag();
+  return (
+    <View style={styles.editRow}>
+      <Pressable
+        onPressIn={drag}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={`Drag ${stop.name} to reorder`}
+        style={styles.handle}>
+        <GripVertical size={20} color={colors.textMuted} />
+      </Pressable>
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>{index + 1}</Text>
+      </View>
+      <View style={styles.stopText}>
+        <Text style={styles.stopName} numberOfLines={1}>
+          {stop.name}
+        </Text>
+        <Text style={styles.stopBlurb}>{stop.visitMinutes} min visit</Text>
+      </View>
+      {canRemove && (
+        <Pressable
+          onPress={onRemove}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${stop.name}`}>
+          <Trash2 size={18} color={colors.textMuted} strokeWidth={1.75} />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+// ---------- Vizualizare ----------
 
 type StopRowProps = { stop: Stop; index: number; active: boolean; onPress: () => void };
 
@@ -118,13 +283,22 @@ function LegRow({ leg }: { leg: Leg }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md - 4,
+  },
+  headerSide: { width: 60 },
   header: {
+    flex: 1,
     textAlign: 'center',
     fontFamily: fonts.medium,
     fontSize: fontSize.lg - 2,
     color: colors.text,
-    paddingVertical: spacing.md - 4,
   },
+  headerAction: { fontFamily: fonts.semibold, fontSize: fontSize.md, color: colors.primary },
   map: { height: 250 },
   content: { padding: spacing.lg, paddingBottom: spacing.md },
   title: { fontFamily: fonts.semibold, fontSize: fontSize.xl - 4, color: colors.text },
@@ -178,5 +352,36 @@ const styles = StyleSheet.create({
     marginRight: spacing.md - 4,
   },
   legText: { fontFamily: fonts.regular, fontSize: fontSize.xs, color: colors.textMuted },
-  bottom: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
+  editHeader: { paddingBottom: spacing.md },
+  hint: {
+    marginTop: spacing.md,
+    fontFamily: fonts.regular,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  editList: { padding: spacing.lg, paddingBottom: spacing.md },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md - 4,
+    height: 64,
+    paddingHorizontal: spacing.md - 4,
+    marginBottom: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  handle: { paddingVertical: spacing.sm },
+  bottom: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.sm,
+    gap: spacing.sm + 2,
+  },
+  diffRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  diffText: { fontFamily: fonts.medium, fontSize: fontSize.sm, color: colors.textSecondary },
+  diffWorse: { color: colors.text },
+  reset: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  resetText: { fontFamily: fonts.semibold, fontSize: fontSize.sm, color: colors.primary },
 });

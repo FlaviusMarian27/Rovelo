@@ -5,9 +5,20 @@
 // Acum generateRoute / replan întorc mock-uri; mai târziu aici vin apelurile spre backend.
 import { createContext, useContext, useState, type PropsWithChildren } from 'react';
 
-import { mockRouteFor } from '@/data/mock';
+import { interests, mockRouteFor } from '@/data/mock';
 import type { Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute } from '@/utils/geo';
+
+// Aceeași rută cu altă listă / ordine de opriri. Id-ul depinde de ordine,
+// deci o rută editată e altă rută (și harta se reîncadrează).
+function withStops(route: Route, stops: Stop[]): Route {
+  const { title, duration, pace, tags } = route;
+  const base = route.id.split(':')[0];
+  return buildRoute(
+    { id: `${base}:${stops.map((s) => s.id).join(',')}`, title, duration, pace, tags },
+    stops,
+  );
+}
 
 export type WalkPhase = 'walking' | 'arrived' | 'finished';
 
@@ -39,6 +50,17 @@ type RouteState = {
   /** Înlocuiește ruta (după Replan / Add to route) fără să piardă progresul. */
   replaceRoute: (route: Route) => void;
   addStop: (stop: Stop) => 'added' | 'exists' | 'no-route';
+  /** Ruta propusă inițial (de "agent"), ca să poți compara și reveni după ce o editezi. */
+  suggestedRoute: Route | null;
+  /** Noua ordine / listă de opriri, aleasă de tine. Ruta se recalculează. */
+  setStops: (stops: Stop[]) => void;
+  resetToSuggested: () => void;
+
+  savedRoutes: Route[];
+  isRouteSaved: (id: string) => boolean;
+  toggleSavedRoute: (route: Route) => void;
+  /** Deschide o rută salvată ca rută activă. */
+  openRoute: (route: Route) => void;
 
   walk: WalkState | null;
   beginWalk: () => void;
@@ -60,15 +82,31 @@ export function RouteProvider({ children }: PropsWithChildren) {
   const [generating, setGenerating] = useState(false);
   const [walk, setWalk] = useState<WalkState | null>(null);
   const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
+  const [suggestedRoute, setSuggestedRoute] = useState<Route | null>(null);
+  const [savedRoutes, setSavedRoutes] = useState<Route[]>([]);
 
   async function generateRoute(prefs: WalkPreferences) {
     setGenerating(true);
     await new Promise((r) => setTimeout(r, 1200)); // simulează "agentul gândește"
-    const route = mockRouteFor(prefs.duration);
-    setActiveRoute(route);
-    setWalk(null);
+    const tags = prefs.interests.map((i) => interests.find((x) => x.id === i)?.label ?? i);
+    const route = { ...mockRouteFor(prefs.duration), tags };
+    openRoute(route);
     setGenerating(false);
     return route;
+  }
+
+  function openRoute(route: Route) {
+    setActiveRoute(route);
+    setSuggestedRoute(route);
+    setWalk(null);
+  }
+
+  function setStops(stops: Stop[]) {
+    if (activeRoute && stops.length) replaceRoute(withStops(activeRoute, stops));
+  }
+
+  function resetToSuggested() {
+    if (suggestedRoute) replaceRoute(suggestedRoute);
   }
 
   function replaceRoute(route: Route) {
@@ -79,11 +117,8 @@ export function RouteProvider({ children }: PropsWithChildren) {
   function addStop(stop: Stop) {
     if (!activeRoute) return 'no-route';
     if (activeRoute.stops.some((s) => s.id === stop.id)) return 'exists';
-    // Cine creează ruta alege ordinea → noul loc intră la final; se poate muta mai târziu.
-    const { id, title, duration, pace } = activeRoute;
-    replaceRoute(
-      buildRoute({ id: `${id}+${stop.id}`, title, duration, pace }, [...activeRoute.stops, stop]),
-    );
+    // Cine creează ruta alege ordinea → noul loc intră la final; se poate muta din Edit.
+    replaceRoute(withStops(activeRoute, [...activeRoute.stops, stop]));
     return 'added';
   }
 
@@ -117,6 +152,18 @@ export function RouteProvider({ children }: PropsWithChildren) {
         },
         replaceRoute,
         addStop,
+        suggestedRoute,
+        setStops,
+        resetToSuggested,
+        savedRoutes,
+        isRouteSaved: (id) => savedRoutes.some((r) => r.id === id),
+        toggleSavedRoute: (route) =>
+          setSavedRoutes((list) =>
+            list.some((r) => r.id === route.id)
+              ? list.filter((r) => r.id !== route.id)
+              : [route, ...list],
+          ),
+        openRoute,
         walk,
         beginWalk,
         arrive,

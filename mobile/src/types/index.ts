@@ -50,6 +50,7 @@ export type Route = {
   path: Coord[]; // linia de desenat pe hartă
   totalMinutes: number; // opriri + mers
   distanceKm: number;
+  tags?: string[]; // interesele pentru care a fost făcută (ex. Architecture, History)
 };
 
 // Povestea unui loc (Place story).
