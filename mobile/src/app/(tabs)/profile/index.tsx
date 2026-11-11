@@ -24,7 +24,15 @@ export default function ProfileScreen() {
   const confirmDelete = () =>
     Alert.alert('Delete account?', 'Your account and saved walks will be removed.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => exit(deleteAccount) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const res = await deleteAccount();
+          if (res.ok) exit(endSession);
+          else Alert.alert("Couldn't delete the account", res.error);
+        },
+      },
     ]);
 
   const initials = user.name
@@ -57,7 +65,11 @@ export default function ProfileScreen() {
         ) : (
           <View style={styles.list}>
             <Row icon={Pencil} label="Edit profile" onPress={() => router.push('/profile/edit')} />
-            <Row icon={SlidersHorizontal} label="Preferences" onPress={() => router.navigate('/home')} />
+            <Row
+              icon={SlidersHorizontal}
+              label="Preferences"
+              onPress={() => router.navigate('/home')}
+            />
             <Row icon={LogOut} label="Log out" onPress={signOut} />
             <Row icon={Trash2} label="Delete account" danger onPress={confirmDelete} last />
           </View>

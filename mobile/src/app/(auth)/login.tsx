@@ -31,7 +31,7 @@ export default function LoginScreen() {
     setLoading(false);
     if (!res.ok) return setErrors({ form: res.error });
     // Animația acoperă ecranul, apoi pornește sesiunea → Stack.Protected te duce în app.
-    enter(origin, () => startSession(res.user));
+    enter(origin, () => startSession(res.user, res.token));
   }
 
   return (

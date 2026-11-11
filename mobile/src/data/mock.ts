@@ -3,11 +3,6 @@
 import type { Duration, Interest, PlaceStory, Route, StartPoint, Stop } from '@/types';
 import { buildRoute } from '@/utils/geo';
 
-// Cont demo ca să poți intra direct cu Log in.
-export const mockAccounts = [
-  { id: 'u1', name: 'Flavius', email: 'demo@rovelo.app', password: 'rovelo123' },
-];
-
 export const durations: Duration[] = ['1h', '2h', '3h+'];
 
 export const interests: { id: Interest; label: string }[] = [

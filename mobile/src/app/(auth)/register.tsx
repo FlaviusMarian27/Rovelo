@@ -34,7 +34,7 @@ export default function RegisterScreen() {
     const res = await signUp(name, email, password);
     setLoading(false);
     if (!res.ok) return setErrors({ form: res.error });
-    enter(origin, () => startSession(res.user));
+    enter(origin, () => startSession(res.user, res.token));
   }
 
   return (

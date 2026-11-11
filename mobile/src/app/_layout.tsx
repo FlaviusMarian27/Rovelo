@@ -8,6 +8,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplash } from '@/components/animated-splash';
@@ -46,7 +47,10 @@ export default function RootLayout() {
 // Stack.Protected: ecranele de auth există doar când nu ești logat, taburile doar când ești.
 // Când se schimbă user-ul, expo-router te mută singur pe ecranul potrivit.
 function RootStack() {
-  const { user } = useSession();
+  const { user, ready } = useSession();
+
+  // Cât verificăm token-ul salvat: rămâne roșul splash-ului, ca să nu clipească Welcome.
+  if (!ready) return <View style={{ flex: 1, backgroundColor: colors.primary }} />;
 
   // key = user → la Log out / alt cont, traseul activ se resetează.
   return (
