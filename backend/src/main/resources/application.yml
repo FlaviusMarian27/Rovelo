@@ -15,6 +15,12 @@ spring:
       ddl-auto: update
     open-in-view: false
 
+rovelo:
+  jwt:
+    secret: ${JWT_SECRET}
+    # cât e valabil un token după login (după aceea trebuie login din nou)
+    ttl: 7d
+
 server:
   port: 8080
   # 0.0.0.0 = accesibil și din rețeaua locală (telefonul cu Expo Go), nu doar de pe laptop
