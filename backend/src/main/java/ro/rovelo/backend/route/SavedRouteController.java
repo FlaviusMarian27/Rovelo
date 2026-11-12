@@ -67,7 +67,7 @@ public class SavedRouteController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The route must be a JSON object.");
         }
         if (json.length() > MAX_ROUTE_CHARS) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "This route is too large.");
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "This route is too large.");
         }
         UUID uid = userId(jwt);
         if (!users.existsById(uid)) {

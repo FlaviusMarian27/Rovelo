@@ -70,7 +70,7 @@ public class SavedPlaceController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The place must be a JSON object.");
         }
         if (json.length() > MAX_PLACE_CHARS) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "This place is too large.");
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "This place is too large.");
         }
         UUID uid = userId(jwt);
         if (!users.existsById(uid)) {
