@@ -19,7 +19,10 @@ mvn spring-boot:run         # pornește serverul pe portul 8080
 | POST   | `/api/auth/login`     | –      | `{email, password}` → `{token, user}`          |
 | GET    | `/api/me`             | Bearer | contul logat                                   |
 | PUT    | `/api/me`             | Bearer | `{name, email}` → contul actualizat            |
-| DELETE | `/api/me`             | Bearer | șterge contul                                  |
+| DELETE | `/api/me`             | Bearer | șterge contul (și rutele salvate)              |
+| GET    | `/api/routes`         | Bearer | rutele salvate, cele mai noi primele           |
+| POST   | `/api/routes`         | Bearer | body = ruta (JSON) → `{id, savedAt, route}`    |
+| DELETE | `/api/routes/{id}`    | Bearer | șterge o rută salvată (doar a ta)              |
 
 Erorile sunt JSON: `{"error": "..."}`, plus `"fields"` la validare.
 Coduri: 400 date invalide, 401 fără token / token invalid / parolă greșită, 409 email deja folosit.
@@ -42,6 +45,11 @@ curl -X POST http://localhost:8080/api/auth/login \
 # contul meu
 TOKEN=<token-ul de mai sus>
 curl http://localhost:8080/api/me -H "Authorization: Bearer $TOKEN"
+
+# salvează o rută, apoi listează
+curl -X POST http://localhost:8080/api/routes -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"id":"r-test","title":"Test route","stops":[]}'
+curl http://localhost:8080/api/routes -H "Authorization: Bearer $TOKEN"
 ```
 De pe telefon (aceeași rețea): `http://<IP-laptop>:8080/...` (IP-ul din `hostname -I`).
 
@@ -49,4 +57,5 @@ De pe telefon (aceeași rețea): `http://<IP-laptop>:8080/...` (IP-ul din `hostn
 Tabelele le creează Hibernate la pornire (`ddl-auto: update`). Ca să te uiți în ea:
 ```bash
 docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, name, email, created_at from users;'
+docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, user_id, saved_at, left(route_json, 60) from saved_routes;'
 ```

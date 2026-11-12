@@ -19,6 +19,8 @@ type Session = {
   user: User | null;
   /** false până verificăm token-ul salvat (la pornire). */
   ready: boolean;
+  /** JWT-ul pentru cererile spre backend; null pentru Guest / delogat. */
+  token: string | null;
   signIn: (email: string, password: string) => Promise<Result>;
   signUp: (name: string, email: string, password: string) => Promise<Result>;
   startSession: (user: User, token?: string) => void;
@@ -135,6 +137,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       value={{
         user,
         ready,
+        token,
         signIn,
         signUp,
         startSession,

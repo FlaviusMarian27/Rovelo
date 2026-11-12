@@ -1,8 +1,18 @@
-// Saved: rutele salvate (din Your route, iconița cu semn de carte) și locurile salvate
-// (din Place story). Deocamdată în memorie; cu backend-ul vor fi pe cont.
+// Saved: rutele salvate (din Your route, iconița cu semn de carte) — pe server, pe contul tău —
+// și locurile salvate (din Place story), deocamdată doar în memorie.
+// Tragi în jos ca să reîncarci lista de pe server.
 import { router } from 'expo-router';
 import { Bookmark, ChevronRight, Landmark } from 'lucide-react-native';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RouteThumb } from '@/components/route/route-thumb';
@@ -14,7 +24,8 @@ import type { Route } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function SavedScreen() {
-  const { savedPlaces, savedRoutes, openRoute, activeRoute, walk } = useRoute();
+  const { savedPlaces, savedRoutes, savedLoading, reloadSaved, openRoute, activeRoute, walk } =
+    useRoute();
   const places = savedPlaces.map(findPlace).filter((p) => !!p);
   const empty = places.length === 0 && savedRoutes.length === 0;
 
@@ -38,7 +49,9 @@ export default function SavedScreen() {
       <Text style={styles.title}>Saved</Text>
       <Text style={styles.sub}>Good walks are worth keeping.</Text>
 
-      {empty ? (
+      {empty && savedLoading ? (
+        <ActivityIndicator style={styles.loading} color={colors.primary} />
+      ) : empty ? (
         <EmptyState
           icon={Bookmark}
           title="Nothing saved yet"
@@ -46,7 +59,16 @@ export default function SavedScreen() {
           action={{ title: 'Plan a walk', onPress: () => router.navigate('/home') }}
         />
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={savedLoading}
+              onRefresh={reloadSaved}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }>
           {savedRoutes.length > 0 && (
             <Text style={styles.section}>Routes · {savedRoutes.length}</Text>
           )}
@@ -137,6 +159,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   list: { padding: spacing.lg, gap: spacing.md - 4 },
+  loading: { marginTop: spacing.xxl },
   section: {
     fontFamily: fonts.semibold,
     fontSize: fontSize.sm,

@@ -2,10 +2,21 @@
 // Progresul stă aici, nu în ecran, ca să nu se piardă când ieși din navigare
 // (ex. deschizi camera sau povestea unui loc și te întorci).
 //
-// Acum generateRoute / replan întorc mock-uri; mai târziu aici vin apelurile spre backend.
-import { createContext, useContext, useState, type PropsWithChildren } from 'react';
+// Rutele salvate stau pe server (pentru cont); pentru Guest doar în memorie.
+// generateRoute / replan întorc încă mock-uri; mai târziu și ele vin din backend.
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type PropsWithChildren,
+} from 'react';
+import { Alert } from 'react-native';
 
+import { useSession } from '@/context/session';
 import { interests, mockRouteFor } from '@/data/mock';
+import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
 import type { Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute } from '@/utils/geo';
 
@@ -57,6 +68,9 @@ type RouteState = {
   resetToSuggested: () => void;
 
   savedRoutes: Route[];
+  /** true cât se încarcă lista de pe server. */
+  savedLoading: boolean;
+  reloadSaved: () => Promise<void>;
   isRouteSaved: (id: string) => boolean;
   toggleSavedRoute: (route: Route) => void;
   /** Deschide o rută salvată ca rută activă. */
@@ -84,6 +98,57 @@ export function RouteProvider({ children }: PropsWithChildren) {
   const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
   const [suggestedRoute, setSuggestedRoute] = useState<Route | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<Route[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  // id-ul rutei din aplicație → id-ul ei pe server (ca să o putem șterge)
+  const serverIds = useRef<Record<string, string>>({});
+
+  const { user, token } = useSession();
+  const online = !!token && !!user && !user.isGuest;
+
+  async function reloadSaved() {
+    if (!online) return;
+    setSavedLoading(true);
+    try {
+      const entries = await listSavedRoutes(token!);
+      serverIds.current = Object.fromEntries(entries.map((e) => [e.route.id, e.id]));
+      setSavedRoutes(entries.map((e) => e.route));
+    } catch {
+      // fără rețea: rămâne ce aveam; ecranul Saved poate reîncerca
+    } finally {
+      setSavedLoading(false);
+    }
+  }
+
+  // La login (provider-ul se recreează pentru fiecare user) încărcăm rutele de pe server.
+  useEffect(() => {
+    reloadSaved();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online]);
+
+  // Salvare / ștergere: actualizăm imediat lista, apoi serverul; la eroare revenim.
+  async function toggleSavedRoute(route: Route) {
+    const wasSaved = savedRoutes.some((r) => r.id === route.id);
+    const before = savedRoutes;
+    setSavedRoutes(wasSaved ? before.filter((r) => r.id !== route.id) : [route, ...before]);
+    if (!online) return; // Guest: doar local
+
+    try {
+      if (wasSaved) {
+        const serverId = serverIds.current[route.id];
+        if (serverId) await deleteSavedRoute(token!, serverId);
+        delete serverIds.current[route.id];
+      } else {
+        const entry = await saveRoute(token!, route);
+        serverIds.current[route.id] = entry.id;
+      }
+    } catch (e) {
+      setSavedRoutes(before);
+      Alert.alert(
+        wasSaved ? "Couldn't remove the route" : "Couldn't save the route",
+        e instanceof Error ? e.message : 'Please try again.',
+      );
+    }
+  }
 
   async function generateRoute(prefs: WalkPreferences) {
     setGenerating(true);
@@ -156,13 +221,10 @@ export function RouteProvider({ children }: PropsWithChildren) {
         setStops,
         resetToSuggested,
         savedRoutes,
+        savedLoading,
+        reloadSaved,
         isRouteSaved: (id) => savedRoutes.some((r) => r.id === id),
-        toggleSavedRoute: (route) =>
-          setSavedRoutes((list) =>
-            list.some((r) => r.id === route.id)
-              ? list.filter((r) => r.id !== route.id)
-              : [route, ...list],
-          ),
+        toggleSavedRoute,
         openRoute,
         walk,
         beginWalk,
