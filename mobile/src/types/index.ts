@@ -1,8 +1,23 @@
+export type ThemePreference = 'system' | 'light' | 'dark';
+
 export type User = {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  nickname: string | null; // opțional, unic, litere mici
+  bio: string | null;
   email: string;
+  theme: ThemePreference;
   isGuest: boolean;
+};
+
+/** Ce se poate modifica din Edit profile. */
+export type ProfileInput = {
+  firstName: string;
+  lastName: string;
+  nickname: string;
+  bio: string;
+  email: string;
 };
 
 export type Duration = '1h' | '2h' | '3h+';

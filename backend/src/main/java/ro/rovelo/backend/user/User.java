@@ -19,8 +19,23 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+    @Column(name = "first_name", nullable = false, length = 50)
+    private String firstName;
+
+    // nullable doar pentru conturile vechi (aveau un singur câmp "name"); API-ul îl cere mereu
+    @Column(name = "last_name", length = 50)
+    private String lastName;
+
+    /** Opțional, unic, mereu cu litere mici (ex. "flavius.m"). Pentru partea socială de mai târziu. */
+    @Column(unique = true, length = 30)
+    private String nickname;
+
+    @Column(length = 160)
+    private String bio;
+
+    /** "system" | "light" | "dark". Null = "system". */
+    @Column(length = 10)
+    private String theme;
 
     /** Mereu salvat cu litere mici (vezi UserService), ca să fie unic indiferent de majuscule. */
     @Column(nullable = false, unique = true, length = 254)
@@ -36,8 +51,9 @@ public class User {
         // pentru JPA
     }
 
-    public User(String name, String email, String passwordHash) {
-        this.name = name;
+    public User(String firstName, String lastName, String email, String passwordHash) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.passwordHash = passwordHash;
     }
@@ -46,12 +62,49 @@ public class User {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    /** Prenume + nume, pentru afișare și token. */
+    public String getFullName() {
+        return lastName == null || lastName.isBlank() ? firstName : firstName + " " + lastName;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getTheme() {
+        return theme == null ? "system" : theme;
+    }
+
+    public void setTheme(String theme) {
+        this.theme = theme;
     }
 
     public String getEmail() {

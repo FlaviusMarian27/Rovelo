@@ -15,10 +15,11 @@ mvn spring-boot:run         # pornește serverul pe portul 8080
 | Metodă | Cale                  | Auth   | Ce face                                        |
 |--------|-----------------------|--------|------------------------------------------------|
 | GET    | `/api/health`         | –      | serverul rulează + conexiunea la DB            |
-| POST   | `/api/auth/register`  | –      | `{name, email, password}` → `{token, user}`    |
+| POST   | `/api/auth/register`  | –      | `{firstName, lastName, email, password}` → `{token, user}` |
 | POST   | `/api/auth/login`     | –      | `{email, password}` → `{token, user}`          |
 | GET    | `/api/me`             | Bearer | contul logat                                   |
-| PUT    | `/api/me`             | Bearer | `{name, email}` → contul actualizat            |
+| PUT    | `/api/me`             | Bearer | `{firstName, lastName, nickname?, bio?, email}` → contul actualizat |
+| PUT    | `/api/me/preferences` | Bearer | `{theme: system\|light\|dark}` → contul actualizat |
 | DELETE | `/api/me`             | Bearer | șterge contul (și rutele salvate)              |
 | GET    | `/api/routes`         | Bearer | rutele salvate, cele mai noi primele           |
 | POST   | `/api/routes`         | Bearer | body = ruta (JSON) → `{id, savedAt, route}`    |
@@ -26,6 +27,8 @@ mvn spring-boot:run         # pornește serverul pe portul 8080
 | GET    | `/api/places`         | Bearer | locurile salvate, cele mai noi primele         |
 | PUT    | `/api/places/{key}`   | Bearer | body = locul (JSON); salvează / actualizează   |
 | DELETE | `/api/places/{key}`   | Bearer | scoate locul din salvate                       |
+
+`user` = `{id, firstName, lastName, nickname, bio, email, theme}`. Nickname-ul e unic (3–30: litere, cifre, `.` `_`, salvat cu litere mici), bio max 160 caractere.
 
 Erorile sunt JSON: `{"error": "..."}`, plus `"fields"` la validare.
 Coduri: 400 date invalide, 401 fără token / token invalid / parolă greșită, 409 email deja folosit.
@@ -38,7 +41,7 @@ curl http://localhost:8080/api/health
 # register (o singură dată per email)
 curl -X POST http://localhost:8080/api/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Flavius","email":"demo@rovelo.app","password":"rovelo123"}'
+  -d '{"firstName":"Flavius","lastName":"Marian","email":"demo@rovelo.app","password":"rovelo123"}'
 
 # login → copiază "token" din răspuns
 curl -X POST http://localhost:8080/api/auth/login \
@@ -59,7 +62,7 @@ De pe telefon (aceeași rețea): `http://<IP-laptop>:8080/...` (IP-ul din `hostn
 ## Baza de date
 Tabelele le creează Hibernate la pornire (`ddl-auto: update`). Ca să te uiți în ea:
 ```bash
-docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, name, email, created_at from users;'
+docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, first_name, last_name, nickname, email, theme from users;'
 docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, user_id, saved_at, left(route_json, 60) from saved_routes;'
 docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select place_key, saved_at, left(place_json, 60) from saved_places;'
 ```

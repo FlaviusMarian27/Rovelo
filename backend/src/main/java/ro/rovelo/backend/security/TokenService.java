@@ -34,7 +34,7 @@ public class TokenService {
                 .subject(user.getId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plus(ttl))
-                .claim("name", user.getName())
+                .claim("name", user.getFullName())
                 .build();
         // Cheie simetrică → HS256 trebuie cerut explicit (implicit ar încerca RS256).
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();

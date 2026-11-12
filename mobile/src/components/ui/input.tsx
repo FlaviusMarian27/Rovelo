@@ -10,9 +10,11 @@ type Props = TextInputProps & {
   hint?: string;
   error?: string;
   password?: boolean;
+  /** Text fix în fața câmpului, ex. "@" la nickname. */
+  prefix?: string;
 };
 
-export function Input({ label, hint, error, password, style, ...rest }: Props) {
+export function Input({ label, hint, error, password, prefix, style, ...rest }: Props) {
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(true);
@@ -20,10 +22,18 @@ export function Input({ label, hint, error, password, style, ...rest }: Props) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.field, focused && styles.fieldFocused, !!error && styles.fieldError]}>
+      <View
+        style={[
+          styles.field,
+          rest.multiline && styles.fieldMultiline,
+          focused && styles.fieldFocused,
+          !!error && styles.fieldError,
+        ]}>
+        {!!prefix && <Text style={styles.prefix}>{prefix}</Text>}
         <TextInput
           {...rest}
-          style={[styles.input, style]}
+          style={[styles.input, rest.multiline && styles.inputMultiline, style]}
+          textAlignVertical={rest.multiline ? 'top' : rest.textAlignVertical}
           placeholderTextColor={colors.textMuted}
           secureTextEntry={password && hidden}
           autoCapitalize={password ? 'none' : rest.autoCapitalize}
@@ -76,7 +86,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     backgroundColor: colors.background,
   },
+  fieldMultiline: { height: undefined, minHeight: 104, alignItems: 'flex-start' },
   fieldFocused: { borderColor: colors.borderFocus },
+  prefix: {
+    fontFamily: fonts.regular,
+    fontSize: fontSize.md,
+    color: colors.textMuted,
+    marginRight: 2,
+  },
   fieldError: { borderColor: colors.error },
   input: {
     flex: 1,
@@ -85,6 +102,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.text,
   },
+  inputMultiline: { height: undefined, minHeight: 104, paddingVertical: spacing.md - 2 },
   hint: { fontFamily: fonts.regular, fontSize: fontSize.xs, color: colors.textSecondary },
   error: { fontFamily: fonts.regular, fontSize: fontSize.xs, color: colors.error },
 });

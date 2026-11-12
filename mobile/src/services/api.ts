@@ -8,6 +8,7 @@ import i18n from '@/i18n';
 const SERVER_MESSAGES: Record<string, string> = {
   'Wrong email or password.': 'errors.wrongCredentials',
   'An account with this email already exists.': 'errors.emailTaken',
+  'This nickname is already taken.': 'errors.nicknameTaken',
 };
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');

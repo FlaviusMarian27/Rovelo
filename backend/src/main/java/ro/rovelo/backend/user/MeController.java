@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import ro.rovelo.backend.user.UserDtos.PreferencesRequest;
 import ro.rovelo.backend.user.UserDtos.UpdateMeRequest;
 import ro.rovelo.backend.user.UserDtos.UserResponse;
 
@@ -39,7 +40,14 @@ public class MeController {
 
     @PutMapping
     public UserResponse update(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateMeRequest req) {
-        return UserResponse.from(userService.update(userId(jwt), req.name(), req.email()));
+        return UserResponse.from(userService.update(userId(jwt), req));
+    }
+
+    /** Setările contului (deocamdată doar tema). */
+    @PutMapping("/preferences")
+    public UserResponse preferences(
+            @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PreferencesRequest req) {
+        return UserResponse.from(userService.updatePreferences(userId(jwt), req.theme()));
     }
 
     @DeleteMapping

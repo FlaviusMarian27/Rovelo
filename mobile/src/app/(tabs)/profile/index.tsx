@@ -19,6 +19,7 @@ import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useTransition } from '@/context/transition';
 import { LANGUAGES } from '@/i18n';
+import { fullName, initials } from '@/utils/user';
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
@@ -44,13 +45,6 @@ export default function ProfileScreen() {
 
   const currentLanguage = LANGUAGES.find((l) => l.code === i18n.language)?.label ?? 'English';
 
-  const initials = user.name
-    .split(' ')
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -58,10 +52,12 @@ export default function ProfileScreen() {
 
         <View style={styles.card}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
+            <Text style={styles.avatarText}>{initials(user)}</Text>
           </View>
-          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.name}>{fullName(user)}</Text>
+          {!!user.nickname && <Text style={styles.nickname}>@{user.nickname}</Text>}
           <Text style={styles.email}>{user.isGuest ? t('profile.guestSub') : user.email}</Text>
+          {!!user.bio && <Text style={styles.bio}>{user.bio}</Text>}
         </View>
 
         <View style={[styles.list, styles.languageList]}>
@@ -153,6 +149,21 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+  },
+  nickname: {
+    marginTop: 2,
+    fontFamily: fonts.medium,
+    fontSize: fontSize.sm,
+    color: colors.primary,
+  },
+  bio: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    textAlign: 'center',
+    fontFamily: fonts.regular,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    color: colors.text,
   },
   list: {
     borderRadius: radius.md,

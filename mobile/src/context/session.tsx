@@ -8,12 +8,20 @@ import { createContext, useContext, useEffect, useState, type PropsWithChildren 
 
 import { api, ApiError } from '@/services/api';
 import { clearToken, getToken, setToken } from '@/services/token-storage';
-import type { User } from '@/types';
+import type { ProfileInput, ThemePreference, User } from '@/types';
 import i18n from '@/i18n';
 
 type Result = { ok: true; user: User; token?: string } | { ok: false; error: string };
 
-type ServerUser = { id: string; name: string; email: string };
+type ServerUser = {
+  id: string;
+  firstName: string;
+  lastName: string | null; // null la conturile vechi, de dinainte de prenume + nume
+  nickname: string | null;
+  bio: string | null;
+  email: string;
+  theme: ThemePreference;
+};
 type AuthResponse = { token: string; user: ServerUser };
 
 type Session = {
@@ -23,17 +31,19 @@ type Session = {
   /** JWT-ul pentru cererile spre backend; null pentru Guest / delogat. */
   token: string | null;
   signIn: (email: string, password: string) => Promise<Result>;
-  signUp: (name: string, email: string, password: string) => Promise<Result>;
+  signUp: (firstName: string, lastName: string, email: string, password: string) => Promise<Result>;
   startSession: (user: User, token?: string) => void;
   continueAsGuest: () => void;
   signOut: () => void;
-  updateProfile: (name: string, email: string) => Promise<Result>;
+  updateProfile: (profile: ProfileInput) => Promise<Result>;
+  /** Setările contului, salvate pe server (deocamdată tema). */
+  updatePreferences: (prefs: { theme: ThemePreference }) => Promise<Result>;
   deleteAccount: () => Promise<Result>;
 };
 
 const SessionContext = createContext<Session | null>(null);
 
-const toUser = (u: ServerUser): User => ({ ...u, isGuest: false });
+const toUser = (u: ServerUser): User => ({ ...u, lastName: u.lastName ?? '', isGuest: false });
 
 const fail = (e: unknown): Result => ({
   ok: false,
@@ -75,11 +85,21 @@ export function SessionProvider({ children }: PropsWithChildren) {
     }
   }
 
-  async function signUp(name: string, email: string, password: string): Promise<Result> {
+  async function signUp(
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+  ): Promise<Result> {
     try {
       const res = await api<AuthResponse>('/api/auth/register', {
         method: 'POST',
-        body: { name: name.trim(), email: email.trim(), password },
+        body: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          password,
+        },
       });
       return { ok: true, user: toUser(res.user), token: res.token };
     } catch (e) {
@@ -97,7 +117,16 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   // Guest: doar local, fără cont pe server.
   function continueAsGuest() {
-    setUser({ id: 'guest', name: 'Guest', email: '', isGuest: true });
+    setUser({
+      id: 'guest',
+      firstName: 'Guest',
+      lastName: '',
+      nickname: null,
+      bio: null,
+      email: '',
+      theme: 'system',
+      isGuest: true,
+    });
   }
 
   function signOut() {
@@ -106,14 +135,42 @@ export function SessionProvider({ children }: PropsWithChildren) {
     setUser(null);
   }
 
-  async function updateProfile(name: string, email: string): Promise<Result> {
+  async function updateProfile(p: ProfileInput): Promise<Result> {
     if (!user || user.isGuest || !token)
       return { ok: false, error: i18n.t('errors.createAccountFirst') };
     try {
       const me = await api<ServerUser>('/api/me', {
         method: 'PUT',
         token,
-        body: { name: name.trim(), email: email.trim() },
+        body: {
+          firstName: p.firstName.trim(),
+          lastName: p.lastName.trim(),
+          nickname: p.nickname.trim() || null,
+          bio: p.bio.trim() || null,
+          email: p.email.trim(),
+        },
+      });
+      const updated = toUser(me);
+      setUser(updated);
+      return { ok: true, user: updated };
+    } catch (e) {
+      return fail(e);
+    }
+  }
+
+  async function updatePreferences(prefs: { theme: ThemePreference }): Promise<Result> {
+    if (!user) return { ok: false, error: i18n.t('errors.generic') };
+    // Guest: doar local
+    if (user.isGuest || !token) {
+      const updated = { ...user, ...prefs };
+      setUser(updated);
+      return { ok: true, user: updated };
+    }
+    try {
+      const me = await api<ServerUser>('/api/me/preferences', {
+        method: 'PUT',
+        token,
+        body: prefs,
       });
       const updated = toUser(me);
       setUser(updated);
@@ -146,6 +203,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         continueAsGuest,
         signOut,
         updateProfile,
+        updatePreferences,
         deleteAccount,
       }}>
       {children}

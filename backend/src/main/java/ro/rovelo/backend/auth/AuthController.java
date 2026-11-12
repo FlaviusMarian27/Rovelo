@@ -23,7 +23,8 @@ import ro.rovelo.backend.user.UserService;
 public class AuthController {
 
     public record RegisterRequest(
-            @NotBlank @Size(max = 100) String name,
+            @NotBlank @Size(max = 50) String firstName,
+            @NotBlank @Size(max = 50) String lastName,
             @NotBlank @Email @Size(max = 254) String email,
             @NotBlank @Size(min = 8, max = 100) String password) {}
 
@@ -42,7 +43,7 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@Valid @RequestBody RegisterRequest req) {
-        User user = userService.register(req.name(), req.email(), req.password());
+        User user = userService.register(req.firstName(), req.lastName(), req.email(), req.password());
         return respond(user);
     }
 
