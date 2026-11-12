@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { RouteThumb } from '@/components/route/route-thumb';
 import { Chip } from '@/components/ui/chip';
@@ -25,6 +26,7 @@ import type { Route } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function SavedScreen() {
+  const { t } = useTranslation();
   const { savedPlaces, savedRoutes, savedLoading, reloadSaved, openRoute, activeRoute, walk } =
     useRoute();
   const places = savedPlaces; // datele vin salvate cu tot cu poveste
@@ -42,42 +44,42 @@ export default function SavedScreen() {
       router.navigate('/route');
     };
     if (walking && activeRoute?.id !== route.id) {
-      Alert.alert('Switch route?', 'Your current walk will stop.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open route', onPress: go },
+      Alert.alert(t('saved.switchTitle'), t('saved.switchText'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('saved.open'), onPress: go },
       ]);
     } else go();
   }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Text style={styles.title}>Saved</Text>
-      <Text style={styles.sub}>Good walks are worth keeping.</Text>
+      <Text style={styles.title}>{t('saved.title')}</Text>
+      <Text style={styles.sub}>{t('saved.subtitle')}</Text>
 
       {empty && savedLoading ? (
         <ActivityIndicator style={styles.loading} color={colors.primary} />
       ) : empty ? (
         <EmptyState
           icon={Bookmark}
-          title="Nothing saved yet"
-          text="Save a route or a place you love and it will show up here."
-          action={{ title: 'Plan a walk', onPress: () => router.navigate('/home') }}
+          title={t('saved.emptyTitle')}
+          text={t('saved.emptyText')}
+          action={{ title: t('common.planWalk'), onPress: () => router.navigate('/home') }}
         />
       ) : (
         <>
           <View style={styles.filters}>
             <Chip
-              label={`All · ${savedRoutes.length + places.length}`}
+              label={t('saved.all', { count: savedRoutes.length + places.length })}
               selected={filter === 'all'}
               onPress={() => setFilter('all')}
             />
             <Chip
-              label={`Routes · ${savedRoutes.length}`}
+              label={t('saved.routes', { count: savedRoutes.length })}
               selected={filter === 'routes'}
               onPress={() => setFilter('routes')}
             />
             <Chip
-              label={`Places · ${places.length}`}
+              label={t('saved.places', { count: places.length })}
               selected={filter === 'places'}
               onPress={() => setFilter('places')}
             />
@@ -93,10 +95,10 @@ export default function SavedScreen() {
               />
             }>
             {showHeadings && savedRoutes.length > 0 && (
-              <Text style={styles.section}>Routes · {savedRoutes.length}</Text>
+              <Text style={styles.section}>{t('saved.routes', { count: savedRoutes.length })}</Text>
             )}
             {showRoutes && savedRoutes.length === 0 && filter === 'routes' && (
-              <Text style={styles.none}>No saved routes yet. Tap the bookmark on Your route.</Text>
+              <Text style={styles.none}>{t('saved.noRoutes')}</Text>
             )}
             {showRoutes &&
               savedRoutes.map((r) => (
@@ -105,18 +107,18 @@ export default function SavedScreen() {
                   onPress={() => open(r)}
                   thumb={<RouteThumb route={r} />}
                   title={r.title}
-                  meta={`${formatMinutes(r.totalMinutes)} · ${r.stops.length} stops`}
+                  meta={`${formatMinutes(r.totalMinutes)} · ${t('common.stops', { count: r.stops.length })}`}
                   tags={r.tags?.join(' · ')}
                 />
               ))}
 
             {showHeadings && places.length > 0 && (
               <Text style={[styles.section, savedRoutes.length > 0 && { marginTop: spacing.md }]}>
-                Places · {places.length}
+                {t('saved.places', { count: places.length })}
               </Text>
             )}
             {showPlaces && places.length === 0 && filter === 'places' && (
-              <Text style={styles.none}>No saved places yet. Tap Save on a place's story.</Text>
+              <Text style={styles.none}>{t('saved.noPlaces')}</Text>
             )}
             {showPlaces &&
               places.map((p) => (
@@ -131,7 +133,7 @@ export default function SavedScreen() {
                     </View>
                   }
                   title={p.name}
-                  meta={`${p.visitMinutes} min visit`}
+                  meta={t('place.visit', { min: p.visitMinutes })}
                   tags={p.story?.category}
                 />
               ))}

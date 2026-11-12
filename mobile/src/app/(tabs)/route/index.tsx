@@ -16,6 +16,7 @@ import { Fragment, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ReorderableList, { reorderItems, useReorderableDrag } from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import type { Leg, Route, Stop } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function RouteScreen() {
+  const { t } = useTranslation();
   const { activeRoute, walk, suggestedRoute, isRouteSaved, toggleSavedRoute } = useRoute();
   const mapRef = useRef<RouteMapHandle>(null);
   const [focused, setFocused] = useState<number | null>(null);
@@ -36,9 +38,9 @@ export default function RouteScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <EmptyState
           icon={Footprints}
-          title="No route yet"
-          text="Tell us how much time you have and what you enjoy. We'll plan the walk."
-          action={{ title: 'Plan a walk', onPress: () => router.navigate('/home') }}
+          title={t('route.emptyTitle')}
+          text={t('route.emptyText')}
+          action={{ title: t('common.planWalk'), onPress: () => router.navigate('/home') }}
         />
       </SafeAreaView>
     );
@@ -60,7 +62,7 @@ export default function RouteScreen() {
           onPress={() => toggleSavedRoute(r)}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={saved ? 'Remove from saved' : 'Save route'}
+          accessibilityLabel={saved ? t('route.unsaveRoute') : t('route.saveRoute')}
           style={styles.headerSide}>
           {saved ? (
             <BookmarkCheck size={22} color={colors.primary} strokeWidth={1.75} />
@@ -68,14 +70,16 @@ export default function RouteScreen() {
             <Bookmark size={22} color={colors.text} strokeWidth={1.75} />
           )}
         </Pressable>
-        <Text style={styles.header}>{editing ? 'Edit route' : 'Your route'}</Text>
+        <Text style={styles.header}>{editing ? t('route.editTitle') : t('route.title')}</Text>
         <View style={[styles.headerSide, { alignItems: 'flex-end' }]}>
           {!inProgress && (
             <Pressable
               onPress={() => setEditing((e) => !e)}
               hitSlop={10}
               accessibilityRole="button">
-              <Text style={styles.headerAction}>{editing ? 'Done' : 'Edit'}</Text>
+              <Text style={styles.headerAction}>
+                {editing ? t('common.done') : t('common.edit')}
+              </Text>
             </Pressable>
           )}
         </View>
@@ -109,7 +113,7 @@ export default function RouteScreen() {
 
           <View style={styles.bottom}>
             <Button
-              title={inProgress ? `Resume route · stop ${walk!.index + 1}` : 'Start route'}
+              title={inProgress ? t('route.resume', { n: walk!.index + 1 }) : t('route.start')}
               icon={Navigation}
               onPress={() => router.push('/route/navigation')}
             />
@@ -121,11 +125,13 @@ export default function RouteScreen() {
 }
 
 function RouteSummary({ route: r }: { route: Route }) {
+  const { t } = useTranslation();
   return (
     <>
       <Text style={styles.title}>{r.title}</Text>
       <Text style={styles.meta}>
-        {formatMinutes(r.totalMinutes)} · {r.distanceKm} km · {r.stops.length} stops · {r.pace}
+        {formatMinutes(r.totalMinutes)} · {r.distanceKm} km ·{' '}
+        {t('common.stops', { count: r.stops.length })} · {r.pace}
       </Text>
     </>
   );
@@ -142,13 +148,14 @@ function EditStops({
   suggested: Route | null;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const { setStops, resetToSuggested } = useRoute();
   const changed = !!suggested && suggested.id !== r.id;
   const diff = suggested ? r.totalMinutes - suggested.totalMinutes : 0;
   const diffText =
     diff === 0
-      ? 'same time as suggested'
-      : `${diff > 0 ? '+' : '−'}${Math.abs(diff)} min vs suggested`;
+      ? t('route.diffSame')
+      : t(diff > 0 ? 'route.diffMore' : 'route.diffLess', { min: Math.abs(diff) });
 
   return (
     <>
@@ -167,7 +174,7 @@ function EditStops({
         ListHeaderComponent={
           <View style={styles.editHeader}>
             <RouteSummary route={r} />
-            <Text style={styles.hint}>Hold ⠿ and drag to change the order.</Text>
+            <Text style={styles.hint}>{t('route.hint')}</Text>
           </View>
         }
         contentContainerStyle={styles.editList}
@@ -184,11 +191,11 @@ function EditStops({
               accessibilityRole="button"
               style={styles.reset}>
               <RotateCcw size={14} color={colors.primary} />
-              <Text style={styles.resetText}>Reset to suggested</Text>
+              <Text style={styles.resetText}>{t('route.reset')}</Text>
             </Pressable>
           </View>
         )}
-        <Button title="Done" onPress={onDone} />
+        <Button title={t('common.done')} onPress={onDone} />
       </View>
     </>
   );
@@ -205,6 +212,7 @@ function EditStopRow({
   canRemove: boolean;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation();
   const drag = useReorderableDrag();
   return (
     <View style={styles.editRow}>
@@ -212,7 +220,7 @@ function EditStopRow({
         onPressIn={drag}
         hitSlop={10}
         accessibilityRole="button"
-        accessibilityLabel={`Drag ${stop.name} to reorder`}
+        accessibilityLabel={t('route.drag', { name: stop.name })}
         style={styles.handle}>
         <GripVertical size={20} color={colors.textMuted} />
       </Pressable>
@@ -223,14 +231,14 @@ function EditStopRow({
         <Text style={styles.stopName} numberOfLines={1}>
           {stop.name}
         </Text>
-        <Text style={styles.stopBlurb}>{stop.visitMinutes} min visit</Text>
+        <Text style={styles.stopBlurb}>{t('route.visit', { min: stop.visitMinutes })}</Text>
       </View>
       {canRemove && (
         <Pressable
           onPress={onRemove}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${stop.name}`}>
+          accessibilityLabel={t('route.remove', { name: stop.name })}>
           <Trash2 size={18} color={colors.textMuted} strokeWidth={1.75} />
         </Pressable>
       )}
@@ -243,11 +251,12 @@ function EditStopRow({
 type StopRowProps = { stop: Stop; index: number; active: boolean; onPress: () => void };
 
 function StopRow({ stop, index, active, onPress }: StopRowProps) {
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Stop ${index + 1}: ${stop.name}, show on map`}
+      accessibilityLabel={t('route.stopLabel', { n: index + 1, name: stop.name })}
       style={({ pressed }) => [styles.stop, (pressed || active) && styles.stopActive]}>
       <View style={styles.badge}>
         <Text style={styles.badgeText}>{index + 1}</Text>
@@ -261,7 +270,7 @@ function StopRow({ stop, index, active, onPress }: StopRowProps) {
         onPress={() => router.push({ pathname: '/route/place/[id]', params: { id: stop.id } })}
         hitSlop={10}
         accessibilityRole="button"
-        accessibilityLabel={`Read the story of ${stop.name}`}
+        accessibilityLabel={t('route.story', { name: stop.name })}
         style={styles.storyButton}>
         <ChevronRight size={18} color={colors.textMuted} />
       </Pressable>
@@ -270,13 +279,12 @@ function StopRow({ stop, index, active, onPress }: StopRowProps) {
 }
 
 function LegRow({ leg }: { leg: Leg }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.leg}>
       <View style={styles.legLine} />
       <Footprints size={14} color={colors.textMuted} strokeWidth={1.75} />
-      <Text style={styles.legText}>
-        {leg.walkMinutes} min walk · {leg.meters} m
-      </Text>
+      <Text style={styles.legText}>{t('route.walk', { min: leg.walkMinutes, m: leg.meters })}</Text>
     </View>
   );
 }

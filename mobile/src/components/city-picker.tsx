@@ -13,12 +13,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useCity } from '@/context/city';
 import { cities, normalize } from '@/data/cities';
 
 export function CityPicker({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
   const { city, setCity, detectCity, detecting } = useCity();
   const [query, setQuery] = useState('');
 
@@ -29,10 +31,8 @@ export function CityPicker({ visible, onClose }: { visible: boolean; onClose: ()
     const res = await detectCity(true);
     if (res === 'ok') return close();
     Alert.alert(
-      res === 'denied' ? 'Location is off' : "Couldn't find your city",
-      res === 'denied'
-        ? 'Allow location for Rovelo in your phone settings, or pick a city from the list.'
-        : 'Pick a city from the list instead.',
+      res === 'denied' ? t('city.deniedTitle') : t('city.failedTitle'),
+      res === 'denied' ? t('city.deniedText') : t('city.failedText'),
     );
   }
 
@@ -49,12 +49,12 @@ export function CityPicker({ visible, onClose }: { visible: boolean; onClose: ()
       onRequestClose={close}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Choose a city</Text>
+          <Text style={styles.title}>{t('city.title')}</Text>
           <Pressable
             onPress={close}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel="Close">
+            accessibilityLabel={t('common.close')}>
             <X size={24} color={colors.text} />
           </Pressable>
         </View>
@@ -64,7 +64,7 @@ export function CityPicker({ visible, onClose }: { visible: boolean; onClose: ()
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search a city"
+            placeholder={t('city.search')}
             placeholderTextColor={colors.textMuted}
             style={styles.searchInput}
             autoCorrect={false}
@@ -82,16 +82,14 @@ export function CityPicker({ visible, onClose }: { visible: boolean; onClose: ()
           ) : (
             <Crosshair size={20} color={colors.primary} strokeWidth={1.75} />
           )}
-          <Text style={[styles.rowText, { color: colors.primary }]}>Use my current location</Text>
+          <Text style={[styles.rowText, { color: colors.primary }]}>{t('city.useLocation')}</Text>
         </Pressable>
 
         <FlatList
           data={results}
           keyExtractor={(c) => c.id}
           keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
-            <Text style={styles.empty}>No city found. Try "Use my current location".</Text>
-          }
+          ListEmptyComponent={<Text style={styles.empty}>{t('city.empty')}</Text>}
           renderItem={({ item }) => {
             const selected = item.id === city.id;
             return (

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -25,6 +26,7 @@ import { useRoute } from '@/context/route';
 import { findPlace, placeStories } from '@/data/mock';
 
 export default function PlaceScreen() {
+  const { t } = useTranslation();
   const { id, photo } = useLocalSearchParams<{ id: string; photo?: string }>();
   const { activeRoute, addStop, isPlaceSaved, toggleSavedPlace } = useRoute();
   const place = findPlace(id);
@@ -35,9 +37,9 @@ export default function PlaceScreen() {
       <SafeAreaView style={styles.safe}>
         <EmptyState
           icon={Landmark}
-          title="Place not found"
-          text="We couldn't find the story for this place."
-          action={{ title: 'Go back', onPress: () => router.back() }}
+          title={t('place.notFound')}
+          text={t('place.notFoundText')}
+          action={{ title: t('common.goBack'), onPress: () => router.back() }}
         />
       </SafeAreaView>
     );
@@ -49,9 +51,9 @@ export default function PlaceScreen() {
   function onAdd() {
     const res = addStop(place!);
     if (res === 'no-route') {
-      Alert.alert('No active walk', 'Plan a walk first, then add places to it.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Plan a walk', onPress: () => router.navigate('/home') },
+      Alert.alert(t('place.noWalk'), t('place.noWalkText'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.planWalk'), onPress: () => router.navigate('/home') },
       ]);
     }
   }
@@ -71,12 +73,12 @@ export default function PlaceScreen() {
             </View>
           )}
           <SafeAreaView edges={['top']} style={styles.heroBar}>
-            <HeroButton icon={ArrowLeft} label="Back" onPress={() => router.back()} />
-            <HeroButton icon={Share2} label="Share" onPress={onShare} />
+            <HeroButton icon={ArrowLeft} label={t('common.back')} onPress={() => router.back()} />
+            <HeroButton icon={Share2} label={t('place.share')} onPress={onShare} />
           </SafeAreaView>
           <View style={styles.visitBadge}>
             <Clock size={14} color={colors.text} strokeWidth={2} />
-            <Text style={styles.visitText}>{place.visitMinutes} min visit</Text>
+            <Text style={styles.visitText}>{t('place.visit', { min: place.visitMinutes })}</Text>
           </View>
         </View>
 
@@ -100,14 +102,14 @@ export default function PlaceScreen() {
       <SafeAreaView edges={['bottom']} style={styles.actions}>
         <View style={styles.addButton}>
           <Button
-            title={inRoute ? 'In your route' : 'Add to route'}
+            title={inRoute ? t('place.inRoute') : t('place.addToRoute')}
             icon={inRoute ? Check : Plus}
             disabled={inRoute}
             onPress={onAdd}
           />
         </View>
         <Button
-          title={saved ? 'Saved' : 'Save'}
+          title={saved ? t('place.saved') : t('place.save')}
           icon={saved ? BookmarkCheck : Bookmark}
           variant="outline"
           onPress={() => toggleSavedPlace({ ...place, story })}

@@ -2,6 +2,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 
@@ -15,10 +16,11 @@ export type MenuItem = {
 type Props = { visible: boolean; onClose: () => void; items: MenuItem[]; top?: number };
 
 export function Menu({ visible, onClose, items, top = 64 }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu">
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')}>
         <View style={[styles.menu, { top: insets.top + top }]}>
           {items.map(({ label, icon: Icon, onPress, danger }, i) => {
             const color = danger ? colors.error : colors.text;

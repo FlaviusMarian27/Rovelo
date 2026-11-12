@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { CityPicker } from '@/components/city-picker';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ const interestIcons: Record<Interest, LucideIcon> = {
 };
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { generateRoute, generating } = useRoute();
   const { city, detecting } = useCity();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -68,25 +70,25 @@ export default function HomeScreen() {
           onPress={() => setPickerOpen(true)}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={`City: ${city.name}. Change city`}
+          accessibilityLabel={t('home.cityLabel', { city: city.name })}
           style={({ pressed }) => [styles.city, pressed && { opacity: 0.6 }]}>
           <MapPin size={16} color={colors.textSecondary} strokeWidth={1.75} />
-          <Text style={styles.cityText}>{detecting ? 'Locating…' : city.name}</Text>
+          <Text style={styles.cityText}>{detecting ? t('home.locating') : city.name}</Text>
           <ChevronDown size={16} color={colors.textSecondary} />
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.eyebrow}>A WALK, YOUR WAY</Text>
-        <Text style={styles.title}>How much time do you have?</Text>
+        <Text style={styles.eyebrow}>{t('home.eyebrow')}</Text>
+        <Text style={styles.title}>{t('home.title')}</Text>
         <Segmented options={durations} value={duration} onChange={setDuration} />
 
-        <Text style={styles.section}>What draws you in?</Text>
+        <Text style={styles.section}>{t('home.interests')}</Text>
         <View style={styles.chips}>
           {interests.map((i) => (
             <Chip
               key={i.id}
-              label={i.label}
+              label={t(`interests.${i.id}`)}
               icon={interestIcons[i.id]}
               selected={selected.includes(i.id)}
               onPress={() => toggle(i.id)}
@@ -94,20 +96,24 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <Text style={styles.section}>Where shall we start?</Text>
-        <StartSelect options={startPoints} value={start} onChange={setStart} />
+        <Text style={styles.section}>{t('home.start')}</Text>
+        <StartSelect
+          options={startPoints}
+          value={startPoints.find((p) => p.id === start.id) ?? startPoints[0]}
+          onChange={setStart}
+        />
       </ScrollView>
 
       <View style={styles.bottom}>
         <Text style={styles.note}>
           {!cityReady
-            ? `Walks in ${city.name} are coming soon. For now, try Timișoara.`
+            ? t('home.noteCity', { city: city.name })
             : selected.length
-              ? 'A local perspective, thoughtfully planned by AI.'
-              : 'Pick at least one thing you enjoy.'}
+              ? t('home.noteReady')
+              : t('home.noteNoInterest')}
         </Text>
         <Button
-          title={generating ? 'Planning your walk…' : 'Generate route'}
+          title={generating ? t('home.generating') : t('home.generate')}
           icon={Sparkles}
           onPress={onGenerate}
           loading={generating}

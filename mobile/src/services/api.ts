@@ -2,6 +2,14 @@
 // URL-ul vine din mobile/.env: EXPO_PUBLIC_API_URL=http://<IP-laptop>:8080
 // (telefonul și laptopul în aceeași rețea; IP-ul îl afli cu `hostname -I`).
 
+import i18n from '@/i18n';
+
+// Mesajele cunoscute de la server → cheia de traducere (serverul răspunde în engleză).
+const SERVER_MESSAGES: Record<string, string> = {
+  'Wrong email or password.': 'errors.wrongCredentials',
+  'An account with this email already exists.': 'errors.emailTaken',
+};
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
 const TIMEOUT_MS = 10_000;
 
@@ -23,7 +31,7 @@ type Options = {
 
 export async function api<T>(path: string, { method = 'GET', body, token }: Options = {}) {
   if (!BASE_URL) {
-    throw new ApiError('EXPO_PUBLIC_API_URL is not set in mobile/.env.', 0);
+    throw new ApiError(i18n.t('errors.apiUrlMissing'), 0);
   }
 
   const controller = new AbortController();
@@ -42,7 +50,7 @@ export async function api<T>(path: string, { method = 'GET', body, token }: Opti
       signal: controller.signal,
     });
   } catch {
-    throw new ApiError("Can't reach the server. Check your connection and try again.", 0);
+    throw new ApiError(i18n.t('errors.network'), 0);
   } finally {
     clearTimeout(timer);
   }
@@ -52,11 +60,12 @@ export async function api<T>(path: string, { method = 'GET', body, token }: Opti
   const data = text ? safeJson(text) : null;
 
   if (!res.ok) {
-    const message =
-      (data && typeof data.error === 'string' && data.error) ||
-      (res.status === 401
-        ? 'Your session has expired. Please log in again.'
-        : 'Something went wrong.');
+    const serverMessage = data && typeof data.error === 'string' ? data.error : null;
+    const message = serverMessage
+      ? SERVER_MESSAGES[serverMessage]
+        ? i18n.t(SERVER_MESSAGES[serverMessage])
+        : serverMessage
+      : i18n.t(res.status === 401 ? 'errors.sessionExpired' : 'errors.generic');
     throw new ApiError(message, res.status, data?.fields);
   }
   return data as T;

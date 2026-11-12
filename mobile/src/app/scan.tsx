@@ -8,12 +8,14 @@ import { Camera, Images, Info, X, Zap, ZapOff, type LucideIcon } from 'lucide-re
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { recognizeLandmark } from '@/services/agent';
 
 export default function ScanScreen() {
+  const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
   const [flash, setFlash] = useState(false);
@@ -29,7 +31,7 @@ export default function ScanScreen() {
       router.push({ pathname: '/route/place/[id]', params: { id: place.id, photo: uri } });
     } catch {
       setAnalyzing(null);
-      Alert.alert("Couldn't recognize it", 'Try again a bit further back, with the whole façade.');
+      Alert.alert(t('scan.failTitle'), t('scan.failText'));
     }
   }
 
@@ -43,11 +45,7 @@ export default function ScanScreen() {
     if (!res.canceled && res.assets[0]) analyze(res.assets[0].uri);
   }
 
-  const showTips = () =>
-    Alert.alert(
-      'Tips',
-      'Stand across the street and fit the whole façade in the frame. Daylight works best.',
-    );
+  const showTips = () => Alert.alert(t('scan.tips'), t('scan.tipsText'));
 
   // Încă nu știm statusul permisiunii
   if (!permission) return <View style={styles.screen} />;
@@ -68,11 +66,11 @@ export default function ScanScreen() {
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
-          <IconButton icon={X} label="Close" onPress={() => router.back()} />
-          <Text style={styles.title}>Scan a building</Text>
+          <IconButton icon={X} label={t('common.close')} onPress={() => router.back()} />
+          <Text style={styles.title}>{t('scan.title')}</Text>
           <IconButton
             icon={flash ? Zap : ZapOff}
-            label={flash ? 'Flash on' : 'Flash off'}
+            label={flash ? t('scan.flashOn') : t('scan.flashOff')}
             onPress={() => setFlash((f) => !f)}
           />
         </View>
@@ -80,13 +78,11 @@ export default function ScanScreen() {
         {!permission.granted ? (
           <View style={styles.permission}>
             <Camera size={40} color={colors.onPrimary} strokeWidth={1.5} />
-            <Text style={styles.headline}>Allow the camera</Text>
-            <Text style={styles.sub}>
-              Rovelo needs the camera to recognize buildings and tell you their story.
-            </Text>
+            <Text style={styles.headline}>{t('scan.allowTitle')}</Text>
+            <Text style={styles.sub}>{t('scan.allowText')}</Text>
             <View style={styles.permissionButtons}>
-              <Button title="Allow camera" onPress={requestPermission} />
-              <Button title="Choose from gallery" variant="outline" onPress={pickFromGallery} />
+              <Button title={t('scan.allow')} onPress={requestPermission} />
+              <Button title={t('scan.gallery')} variant="outline" onPress={pickFromGallery} />
             </View>
           </View>
         ) : (
@@ -96,28 +92,28 @@ export default function ScanScreen() {
                 {analyzing && (
                   <View style={styles.analyzing}>
                     <ActivityIndicator color={colors.onPrimary} size="large" />
-                    <Text style={styles.analyzingText}>Looking closely…</Text>
+                    <Text style={styles.analyzingText}>{t('scan.analyzing')}</Text>
                   </View>
                 )}
               </View>
-              <Text style={styles.headline}>Frame the building</Text>
-              <Text style={styles.sub}>A façade. A photo. A story worth knowing.</Text>
+              <Text style={styles.headline}>{t('scan.frame')}</Text>
+              <Text style={styles.sub}>{t('scan.frameText')}</Text>
             </View>
 
             <View style={styles.controls}>
-              <IconButton icon={Images} label="Choose from gallery" onPress={pickFromGallery} />
+              <IconButton icon={Images} label={t('scan.gallery')} onPress={pickFromGallery} />
               <Pressable
                 onPress={takePhoto}
                 disabled={!!analyzing}
                 accessibilityRole="button"
-                accessibilityLabel="Take photo"
+                accessibilityLabel={t('scan.takePhoto')}
                 style={({ pressed }) => [
                   styles.shutter,
                   pressed && { transform: [{ scale: 0.94 }] },
                 ]}>
                 <View style={styles.shutterInner} />
               </Pressable>
-              <IconButton icon={Info} label="Tips" onPress={showTips} />
+              <IconButton icon={Info} label={t('scan.tips')} onPress={showTips} />
             </View>
           </>
         )}

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import {
   ChevronRight,
+  Languages,
   LogOut,
   Pencil,
   SlidersHorizontal,
@@ -9,30 +10,41 @@ import {
 } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useTransition } from '@/context/transition';
+import { LANGUAGES, setLanguage } from '@/i18n';
 
 export default function ProfileScreen() {
+  const { t, i18n } = useTranslation();
   const { user, signOut: endSession, deleteAccount } = useSession();
   const { exit } = useTransition();
   if (!user) return null;
 
   const signOut = () => exit(endSession);
   const confirmDelete = () =>
-    Alert.alert('Delete account?', 'Your account and saved walks will be removed.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('profile.deleteTitle'), t('profile.deleteText'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           const res = await deleteAccount();
           if (res.ok) exit(endSession);
-          else Alert.alert("Couldn't delete the account", res.error);
+          else Alert.alert(t('profile.deleteFailed'), res.error);
         },
       },
+    ]);
+
+  const currentLanguage = LANGUAGES.find((l) => l.code === i18n.language)?.label ?? 'English';
+  // Cu 2 limbi ajunge un Alert; la mai multe limbi îl schimbăm cu o listă.
+  const chooseLanguage = () =>
+    Alert.alert(t('profile.language'), undefined, [
+      ...LANGUAGES.map((l) => ({ text: l.label, onPress: () => setLanguage(l.code) })),
+      { text: t('common.cancel'), style: 'cancel' as const },
     ]);
 
   const initials = user.name
@@ -45,33 +57,45 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.title}>{t('profile.title')}</Text>
 
         <View style={styles.card}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.email}>{user.isGuest ? 'Exploring as a guest' : user.email}</Text>
+          <Text style={styles.email}>{user.isGuest ? t('profile.guestSub') : user.email}</Text>
+        </View>
+
+        <View style={[styles.list, styles.languageList]}>
+          <Row
+            icon={Languages}
+            label={t('profile.language')}
+            value={currentLanguage}
+            onPress={chooseLanguage}
+            last
+          />
         </View>
 
         {user.isGuest ? (
           <View style={styles.guest}>
-            <Text style={styles.guestText}>
-              Create an account to save routes and keep your preferences.
-            </Text>
-            <Button title="Log in or create account" onPress={signOut} />
+            <Text style={styles.guestText}>{t('profile.guestText')}</Text>
+            <Button title={t('profile.guestButton')} onPress={signOut} />
           </View>
         ) : (
           <View style={styles.list}>
-            <Row icon={Pencil} label="Edit profile" onPress={() => router.push('/profile/edit')} />
+            <Row
+              icon={Pencil}
+              label={t('profile.edit')}
+              onPress={() => router.push('/profile/edit')}
+            />
             <Row
               icon={SlidersHorizontal}
-              label="Preferences"
+              label={t('profile.preferences')}
               onPress={() => router.navigate('/home')}
             />
-            <Row icon={LogOut} label="Log out" onPress={signOut} />
-            <Row icon={Trash2} label="Delete account" danger onPress={confirmDelete} last />
+            <Row icon={LogOut} label={t('profile.logOut')} onPress={signOut} />
+            <Row icon={Trash2} label={t('profile.delete')} danger onPress={confirmDelete} last />
           </View>
         )}
       </ScrollView>
@@ -83,11 +107,12 @@ type RowProps = {
   icon: LucideIcon;
   label: string;
   onPress: () => void;
+  value?: string; // ex. limba curentă, afișată în dreapta
   danger?: boolean;
   last?: boolean;
 };
 
-function Row({ icon: Icon, label, onPress, danger, last }: RowProps) {
+function Row({ icon: Icon, label, value, onPress, danger, last }: RowProps) {
   const color = danger ? colors.error : colors.text;
   return (
     <Pressable
@@ -100,12 +125,15 @@ function Row({ icon: Icon, label, onPress, danger, last }: RowProps) {
       ]}>
       <Icon size={20} color={color} strokeWidth={1.75} />
       <Text style={[styles.rowLabel, { color }]}>{label}</Text>
+      {!!value && <Text style={styles.rowValue}>{value}</Text>}
       {!danger && <ChevronRight size={18} color={colors.textMuted} />}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  languageList: { marginBottom: spacing.md },
+  rowValue: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.textSecondary },
   safe: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingTop: spacing.md },
   title: { fontFamily: fonts.semibold, fontSize: fontSize.xl, color: colors.text },

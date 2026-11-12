@@ -25,6 +25,7 @@ import {
 import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
 import type { Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute } from '@/utils/geo';
+import i18n from '@/i18n';
 
 // Aceeași rută cu altă listă / ordine de opriri. Id-ul depinde de ordine,
 // deci o rută editată e altă rută (și harta se reîncadrează).
@@ -156,8 +157,8 @@ export function RouteProvider({ children }: PropsWithChildren) {
     } catch (e) {
       setSavedRoutes(before);
       Alert.alert(
-        wasSaved ? "Couldn't remove the route" : "Couldn't save the route",
-        e instanceof Error ? e.message : 'Please try again.',
+        i18n.t(wasSaved ? 'route.removeFailed' : 'route.saveFailed'),
+        e instanceof Error ? e.message : i18n.t('route.tryAgain'),
       );
     }
   }
@@ -174,8 +175,8 @@ export function RouteProvider({ children }: PropsWithChildren) {
     } catch (e) {
       setSavedPlaces(before);
       Alert.alert(
-        wasSaved ? "Couldn't remove the place" : "Couldn't save the place",
-        e instanceof Error ? e.message : 'Please try again.',
+        i18n.t(wasSaved ? 'place.removeFailed' : 'place.saveFailed'),
+        e instanceof Error ? e.message : i18n.t('route.tryAgain'),
       );
     }
   }

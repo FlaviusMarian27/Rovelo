@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
@@ -9,6 +10,7 @@ import { useSession } from '@/context/session';
 import { touchPoint, useTransition } from '@/context/transition';
 
 export default function WelcomeScreen() {
+  const { t } = useTranslation();
   const { continueAsGuest } = useSession();
   const { enter } = useTransition();
 
@@ -19,17 +21,21 @@ export default function WelcomeScreen() {
           source={require('@/assets/images/icon.png')}
           style={styles.logo}
           contentFit="cover"
-          accessibilityLabel="Rovelo logo"
+          accessibilityLabel={t('welcome.logo')}
         />
         <Text style={styles.name}>Rovelo</Text>
-        <Text style={styles.tagline}>A walk, your way</Text>
+        <Text style={styles.tagline}>{t('welcome.tagline')}</Text>
       </View>
 
       <View style={styles.actions}>
-        <Button title="Log in" onPress={() => router.push('/login')} />
-        <Button title="Create account" variant="outline" onPress={() => router.push('/register')} />
+        <Button title={t('welcome.logIn')} onPress={() => router.push('/login')} />
         <Button
-          title="Continue as guest"
+          title={t('welcome.createAccount')}
+          variant="outline"
+          onPress={() => router.push('/register')}
+        />
+        <Button
+          title={t('welcome.guest')}
           variant="text"
           onPress={(e) => enter(touchPoint(e), continueAsGuest)}
         />

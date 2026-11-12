@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import '@/i18n'; // traducerile, înainte de orice ecran
 import { AnimatedSplash } from '@/components/animated-splash';
 import { colors } from '@/constants/theme';
 import { CityProvider } from '@/context/city';

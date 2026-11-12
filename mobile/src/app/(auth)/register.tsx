@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, type GestureResponderEvent } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { isValidEmail, MIN_PASSWORD } from '@/utils/validation';
 type Errors = { name?: string; email?: string; password?: string; form?: string };
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const { signUp, startSession } = useSession();
   const { enter } = useTransition();
   const [name, setName] = useState('');
@@ -24,9 +26,9 @@ export default function RegisterScreen() {
   async function onSubmit(e?: GestureResponderEvent) {
     const origin = touchPoint(e);
     const next: Errors = {};
-    if (!name.trim()) next.name = 'Enter your name.';
-    if (!isValidEmail(email)) next.email = 'Enter a valid email.';
-    if (password.length < MIN_PASSWORD) next.password = `Use at least ${MIN_PASSWORD} characters.`;
+    if (!name.trim()) next.name = t('auth.errName');
+    if (!isValidEmail(email)) next.email = t('auth.errEmail');
+    if (password.length < MIN_PASSWORD) next.password = t('auth.minChars', { count: MIN_PASSWORD });
     setErrors(next);
     if (Object.keys(next).length) return;
 
@@ -39,12 +41,18 @@ export default function RegisterScreen() {
 
   return (
     <AuthForm
-      title="Create account"
-      subtitle="Make every walk your own."
-      footer={<FooterLink text="Already have an account?" link="Log in" href="/login" />}>
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.subtitle')}
+      footer={
+        <FooterLink
+          text={t('auth.register.footer')}
+          link={t('auth.register.footerLink')}
+          href="/login"
+        />
+      }>
       <Input
-        label="Name"
-        placeholder="Your name"
+        label={t('auth.name')}
+        placeholder={t('auth.namePlaceholder')}
         value={name}
         onChangeText={setName}
         autoCapitalize="words"
@@ -54,8 +62,8 @@ export default function RegisterScreen() {
         error={errors.name}
       />
       <Input
-        label="Email"
-        placeholder="you@example.com"
+        label={t('auth.email')}
+        placeholder={t('auth.emailPlaceholder')}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -66,8 +74,8 @@ export default function RegisterScreen() {
         error={errors.email}
       />
       <Input
-        label="Password"
-        placeholder="Create a password"
+        label={t('auth.password')}
+        placeholder={t('auth.newPasswordPlaceholder')}
         value={password}
         onChangeText={setPassword}
         password
@@ -75,13 +83,13 @@ export default function RegisterScreen() {
         textContentType="newPassword"
         returnKeyType="go"
         onSubmitEditing={() => onSubmit()}
-        hint={`Use at least ${MIN_PASSWORD} characters.`}
+        hint={t('auth.minChars', { count: MIN_PASSWORD })}
         error={errors.password}
       />
 
       {errors.form && <Text style={styles.formError}>{errors.form}</Text>}
 
-      <Button title="Create account" onPress={onSubmit} loading={loading} />
+      <Button title={t('auth.register.submit')} onPress={onSubmit} loading={loading} />
     </AuthForm>
   );
 }

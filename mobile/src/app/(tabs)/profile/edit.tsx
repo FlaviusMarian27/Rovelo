@@ -2,6 +2,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { isValidEmail } from '@/utils/validation';
 type Errors = { name?: string; email?: string; form?: string };
 
 export default function EditProfileScreen() {
+  const { t } = useTranslation();
   const { user, updateProfile } = useSession();
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
@@ -23,8 +25,8 @@ export default function EditProfileScreen() {
 
   async function onSave() {
     const next: Errors = {};
-    if (!name.trim()) next.name = 'Enter your name.';
-    if (!isValidEmail(email)) next.email = 'Enter a valid email.';
+    if (!name.trim()) next.name = t('auth.errName');
+    if (!isValidEmail(email)) next.email = t('auth.errEmail');
     setErrors(next);
     if (Object.keys(next).length) return;
 
@@ -36,10 +38,10 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <AuthForm title="Edit profile" subtitle="How you show up in Rovelo." footer={null}>
+    <AuthForm title={t('profile.edit')} subtitle={t('profile.editSubtitle')} footer={null}>
       <Input
-        label="Name"
-        placeholder="Your name"
+        label={t('auth.name')}
+        placeholder={t('auth.namePlaceholder')}
         value={name}
         onChangeText={setName}
         autoCapitalize="words"
@@ -48,8 +50,8 @@ export default function EditProfileScreen() {
         error={errors.name}
       />
       <Input
-        label="Email"
-        placeholder="you@example.com"
+        label={t('auth.email')}
+        placeholder={t('auth.emailPlaceholder')}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -63,7 +65,12 @@ export default function EditProfileScreen() {
 
       {errors.form && <Text style={styles.formError}>{errors.form}</Text>}
 
-      <Button title="Save changes" onPress={onSave} loading={loading} disabled={!changed} />
+      <Button
+        title={t('profile.saveChanges')}
+        onPress={onSave}
+        loading={loading}
+        disabled={!changed}
+      />
     </AuthForm>
   );
 }

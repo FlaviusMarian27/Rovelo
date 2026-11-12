@@ -22,6 +22,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ export default function NavigationScreen() {
 }
 
 function Navigation({ route, walkState }: { route: Route; walkState: WalkState }) {
+  const { t } = useTranslation();
   const { setDemo, addDelay, snoozeLate, endWalk, replaceRoute } = useRoute();
   const demo = walkState.demo;
   const [following, setFollowing] = useState(true);
@@ -78,7 +80,7 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
     setReplanning(false);
     if (result) setProposal(result);
     else {
-      Alert.alert('Nothing left to cut', 'This is already the shortest version of your walk.');
+      Alert.alert(t('nav.nothingToCut'), t('nav.nothingToCutText'));
       snoozeLate(walk.late);
     }
   }
@@ -97,11 +99,11 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
 
   const menuItems: MenuItem[] = [
     demo
-      ? { label: 'Use real GPS', icon: NavIcon, onPress: () => setDemo(false) }
-      : { label: 'Simulate walk (demo)', icon: PlayCircle, onPress: () => setDemo(true) },
-    ...(demo ? [{ label: 'Simulate 10 min delay', icon: Timer, onPress: () => addDelay(10) }] : []),
+      ? { label: t('nav.useGps'), icon: NavIcon, onPress: () => setDemo(false) }
+      : { label: t('nav.simulate'), icon: PlayCircle, onPress: () => setDemo(true) },
+    ...(demo ? [{ label: t('nav.simulateDelay'), icon: Timer, onPress: () => addDelay(10) }] : []),
     {
-      label: 'End route',
+      label: t('nav.endRoute'),
       icon: X,
       danger: true,
       onPress: () => {
@@ -123,7 +125,10 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
   };
 
   const n = route.stops.length;
-  const stopLabel = walk.phase === 'finished' ? 'Route complete' : `Stop ${walk.index + 1} of ${n}`;
+  const stopLabel =
+    walk.phase === 'finished'
+      ? t('nav.complete')
+      : t('nav.stopOf', { n: walk.index + 1, total: n });
 
   return (
     <View style={styles.screen}>
@@ -138,11 +143,11 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
 
       <SafeAreaView style={styles.overlay} edges={['top']} pointerEvents="box-none">
         <View style={styles.topBar}>
-          <RoundButton icon={ArrowLeft} label="Back" onPress={() => router.back()} />
+          <RoundButton icon={ArrowLeft} label={t('common.back')} onPress={() => router.back()} />
           <View style={styles.pill}>
             <Text style={styles.pillText}>{stopLabel}</Text>
           </View>
-          <RoundButton icon={Ellipsis} label="Route options" onPress={() => setMenuOpen(true)} />
+          <RoundButton icon={Ellipsis} label={t('nav.options')} onPress={() => setMenuOpen(true)} />
         </View>
 
         {walk.phase !== 'finished' && (
@@ -153,11 +158,11 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
       {/* Jos: butoanele în dreapta, deasupra eventualului card → urcă singure când apare cardul */}
       <View style={styles.bottom} pointerEvents="box-none">
         <View style={styles.sideButtons} pointerEvents="box-none">
-          <RoundButton icon={Crosshair} label="Center on me" onPress={recenter} />
+          <RoundButton icon={Crosshair} label={t('nav.centerOnMe')} onPress={recenter} />
           <Pressable
             onPress={() => router.push('/scan')}
             accessibilityRole="button"
-            accessibilityLabel="Scan a building"
+            accessibilityLabel={t('nav.scan')}
             style={({ pressed }) => [styles.cameraButton, pressed && { opacity: 0.85 }]}>
             <Camera size={24} color={colors.onPrimary} strokeWidth={1.75} />
           </Pressable>
@@ -172,9 +177,12 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
   function renderBottomCard(): ReactNode {
     if (walk.phase === 'finished') {
       return (
-        <BottomCard icon={Flag} title="Nice walk!" text={`${n} stops · ${route.distanceKm} km`}>
+        <BottomCard
+          icon={Flag}
+          title={t('nav.niceWalk')}
+          text={`${t('common.stops', { count: n })} · ${route.distanceKm} km`}>
           <Button
-            title="Back to route"
+            title={t('nav.backToRoute')}
             onPress={() => {
               endWalk();
               router.back();
@@ -188,14 +196,14 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
       return (
         <BottomCard
           icon={Sparkles}
-          title="Updated route"
-          text={`Removed ${names} · saved ${proposal.savedMin} min`}>
+          title={t('nav.updated')}
+          text={t('nav.removed', { names, min: proposal.savedMin })}>
           <View style={styles.row}>
             <View style={styles.flex}>
-              <Button title="Keep original" variant="outline" onPress={keepOriginal} />
+              <Button title={t('nav.keepOriginal')} variant="outline" onPress={keepOriginal} />
             </View>
             <View style={styles.flex}>
-              <Button title="Accept" onPress={acceptProposal} />
+              <Button title={t('common.accept')} onPress={acceptProposal} />
             </View>
           </View>
         </BottomCard>
@@ -205,10 +213,10 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
       const nextStop = route.stops[walk.index + 1];
       return (
         <BottomCard
-          title={`You're at ${walk.target.name}`}
-          text={`${walk.target.blurb}. Stay about ${walk.target.visitMinutes} min.`}>
+          title={t('nav.youreAt', { name: walk.target.name })}
+          text={t('nav.stay', { blurb: walk.target.blurb, min: walk.target.visitMinutes })}>
           <Button
-            title={nextStop ? `Continue to ${nextStop.name}` : 'Finish route'}
+            title={nextStop ? t('nav.continueTo', { name: nextStop.name }) : t('nav.finish')}
             onPress={walk.next}
           />
         </BottomCard>
@@ -216,20 +224,15 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
     }
     if (!demo && (gps.status === 'denied' || gps.status === 'error')) {
       return (
-        <BottomCard
-          icon={MapPinOff}
-          title="Location is off"
-          text="Allow location to follow the route, or try it with a simulated walk.">
-          <Button title="Simulate walk" onPress={() => setDemo(true)} />
+        <BottomCard icon={MapPinOff} title={t('nav.locationOff')} text={t('nav.locationOffText')}>
+          <Button title={t('nav.simulateWalk')} onPress={() => setDemo(true)} />
         </BottomCard>
       );
     }
     if (!demo && far) {
       return (
-        <BottomCard
-          title="You're far from this route"
-          text="Walk over to the first stop, or preview the route with a simulated walk.">
-          <Button title="Simulate walk" variant="outline" onPress={() => setDemo(true)} />
+        <BottomCard title={t('nav.far')} text={t('nav.farText')}>
+          <Button title={t('nav.simulateWalk')} variant="outline" onPress={() => setDemo(true)} />
         </BottomCard>
       );
     }
@@ -237,11 +240,11 @@ function Navigation({ route, walkState }: { route: Route; walkState: WalkState }
       return (
         <BottomCard
           icon={Clock}
-          title={`You're running ${roughMinutes(walk.late)} late`}
-          text="Keep the highlights. Shorten the walk."
+          title={t('nav.late', { min: roughMinutes(walk.late) })}
+          text={t('nav.lateText')}
           onDismiss={() => snoozeLate(walk.late ?? 0)}>
           <Button
-            title={replanning ? 'Replanning…' : 'Replan with AI'}
+            title={replanning ? t('nav.replanning') : t('nav.replan')}
             icon={Sparkles}
             loading={replanning}
             onPress={onReplan}
@@ -266,6 +269,7 @@ function NextStopCard({
   hasPosition: boolean;
   demo: boolean;
 }) {
+  const { t } = useTranslation();
   const arrived = walk.phase === 'arrived';
   const after = route.stops[walk.index + 1];
   // Săgeata arată direcția spre oprire pe harta orientată spre nord.
@@ -274,19 +278,19 @@ function NextStopCard({
       ? bearing(route.stops[Math.max(0, walk.index - 1)].coord, walk.target.coord)
       : 0;
 
-  let title = `Head to ${walk.target.name}`;
-  let sub = 'Finding your location…';
+  let title = t('nav.headTo', { name: walk.target.name });
+  let sub = t('nav.finding');
   if (hasPosition && walk.toTarget) {
     const { meters, walkMinutes } = walk.toTarget;
     // Departe de traseu, minutele de mers n-au sens ("118 h") → doar distanța.
     sub =
       meters > FAR_FROM_ROUTE_M
-        ? `${formatDistance(meters)} away`
+        ? t('nav.away', { distance: formatDistance(meters) })
         : `${formatDistance(meters)} · ${formatMinutes(walkMinutes)}`;
   }
   if (arrived) {
     title = walk.target.name;
-    sub = after ? `Next stop: ${after.name}` : 'Last stop';
+    sub = after ? t('nav.nextStop', { name: after.name }) : t('nav.lastStop');
   }
 
   return (
@@ -298,7 +302,7 @@ function NextStopCard({
         <Text style={styles.cardTitle} numberOfLines={1}>
           {title}
         </Text>
-        {demo && <Text style={styles.demoTag}>DEMO</Text>}
+        {demo && <Text style={styles.demoTag}>{t('nav.demo')}</Text>}
       </View>
       <Text style={styles.cardSub}>{sub}</Text>
     </View>
@@ -318,13 +322,14 @@ function BottomCard({
   onDismiss?: () => void;
   children?: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.card, styles.bottomCard]}>
       <View style={styles.cardRow}>
         {Icon && <Icon size={20} color={colors.text} strokeWidth={1.75} />}
         <Text style={styles.cardTitle}>{title}</Text>
         {onDismiss && (
-          <Pressable onPress={onDismiss} hitSlop={12} accessibilityLabel="Not now">
+          <Pressable onPress={onDismiss} hitSlop={12} accessibilityLabel={t('common.notNow')}>
             <X size={18} color={colors.textMuted} />
           </Pressable>
         )}

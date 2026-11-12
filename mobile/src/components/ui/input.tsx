@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 
@@ -12,6 +13,7 @@ type Props = TextInputProps & {
 };
 
 export function Input({ label, hint, error, password, style, ...rest }: Props) {
+  const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(true);
 
@@ -39,7 +41,7 @@ export function Input({ label, hint, error, password, style, ...rest }: Props) {
           <Pressable
             onPress={() => setHidden((h) => !h)}
             hitSlop={12}
-            accessibilityLabel={hidden ? 'Show password' : 'Hide password'}>
+            accessibilityLabel={hidden ? t('auth.showPassword') : t('auth.hidePassword')}>
             {hidden ? (
               <Eye size={20} color={colors.textSecondary} />
             ) : (

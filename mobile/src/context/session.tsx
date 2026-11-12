@@ -9,6 +9,7 @@ import { createContext, useContext, useEffect, useState, type PropsWithChildren 
 import { api, ApiError } from '@/services/api';
 import { clearToken, getToken, setToken } from '@/services/token-storage';
 import type { User } from '@/types';
+import i18n from '@/i18n';
 
 type Result = { ok: true; user: User; token?: string } | { ok: false; error: string };
 
@@ -36,7 +37,7 @@ const toUser = (u: ServerUser): User => ({ ...u, isGuest: false });
 
 const fail = (e: unknown): Result => ({
   ok: false,
-  error: e instanceof ApiError ? e.message : 'Something went wrong.',
+  error: e instanceof ApiError ? e.message : i18n.t('errors.generic'),
 });
 
 export function SessionProvider({ children }: PropsWithChildren) {
@@ -106,7 +107,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }
 
   async function updateProfile(name: string, email: string): Promise<Result> {
-    if (!user || user.isGuest || !token) return { ok: false, error: 'Create an account first.' };
+    if (!user || user.isGuest || !token)
+      return { ok: false, error: i18n.t('errors.createAccountFirst') };
     try {
       const me = await api<ServerUser>('/api/me', {
         method: 'PUT',
@@ -123,7 +125,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   /** Șterge contul pe server. Delogarea o face ecranul (după animație), cu signOut. */
   async function deleteAccount(): Promise<Result> {
-    if (!user || user.isGuest || !token) return { ok: false, error: 'No account to delete.' };
+    if (!user || user.isGuest || !token) return { ok: false, error: i18n.t('errors.noAccount') };
     try {
       await api('/api/me', { method: 'DELETE', token });
       return { ok: true, user };
