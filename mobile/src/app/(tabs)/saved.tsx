@@ -1,5 +1,5 @@
 // Saved: rutele salvate (din Your route, iconița cu semn de carte) — pe server, pe contul tău —
-// și locurile salvate (din Place story), deocamdată doar în memorie.
+// și locurile salvate (din Place story), tot pe server.
 // Tragi în jos ca să reîncarci lista de pe server.
 import { router } from 'expo-router';
 import { Bookmark, ChevronRight, Landmark } from 'lucide-react-native';
@@ -19,14 +19,13 @@ import { RouteThumb } from '@/components/route/route-thumb';
 import { EmptyState } from '@/components/ui/empty-state';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
-import { findPlace, placeStories } from '@/data/mock';
 import type { Route } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function SavedScreen() {
   const { savedPlaces, savedRoutes, savedLoading, reloadSaved, openRoute, activeRoute, walk } =
     useRoute();
-  const places = savedPlaces.map(findPlace).filter((p) => !!p);
+  const places = savedPlaces; // datele vin salvate cu tot cu poveste
   const empty = places.length === 0 && savedRoutes.length === 0;
 
   function open(route: Route) {
@@ -99,7 +98,7 @@ export default function SavedScreen() {
               }
               title={p.name}
               meta={`${p.visitMinutes} min visit`}
-              tags={placeStories[p.id]?.category}
+              tags={p.story?.category}
             />
           ))}
         </ScrollView>

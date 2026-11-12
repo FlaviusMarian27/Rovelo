@@ -16,6 +16,12 @@ import { Alert } from 'react-native';
 
 import { useSession } from '@/context/session';
 import { interests, mockRouteFor } from '@/data/mock';
+import {
+  deleteSavedPlace,
+  listSavedPlaces,
+  savePlace,
+  type PlaceSnapshot,
+} from '@/services/places-api';
 import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
 import type { Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute } from '@/utils/geo';
@@ -85,8 +91,10 @@ type RouteState = {
   addDelay: (min: number) => void;
   snoozeLate: (lateMin: number) => void;
 
-  savedPlaces: string[];
-  toggleSavedPlace: (id: string) => void;
+  /** Locurile salvate (pe server pentru cont; Guest local), cele mai noi primele. */
+  savedPlaces: PlaceSnapshot[];
+  isPlaceSaved: (id: string) => boolean;
+  toggleSavedPlace: (place: PlaceSnapshot) => void;
 };
 
 const RouteContext = createContext<RouteState | null>(null);
@@ -95,7 +103,7 @@ export function RouteProvider({ children }: PropsWithChildren) {
   const [activeRoute, setActiveRoute] = useState<Route | null>(null);
   const [generating, setGenerating] = useState(false);
   const [walk, setWalk] = useState<WalkState | null>(null);
-  const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
+  const [savedPlaces, setSavedPlaces] = useState<PlaceSnapshot[]>([]);
   const [suggestedRoute, setSuggestedRoute] = useState<Route | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<Route[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
@@ -109,9 +117,13 @@ export function RouteProvider({ children }: PropsWithChildren) {
     if (!online) return;
     setSavedLoading(true);
     try {
-      const entries = await listSavedRoutes(token!);
-      serverIds.current = Object.fromEntries(entries.map((e) => [e.route.id, e.id]));
-      setSavedRoutes(entries.map((e) => e.route));
+      const [routes, places] = await Promise.all([
+        listSavedRoutes(token!),
+        listSavedPlaces(token!),
+      ]);
+      serverIds.current = Object.fromEntries(routes.map((e) => [e.route.id, e.id]));
+      setSavedRoutes(routes.map((e) => e.route));
+      setSavedPlaces(places.map((e) => e.place));
     } catch {
       // fără rețea: rămâne ce aveam; ecranul Saved poate reîncerca
     } finally {
@@ -145,6 +157,24 @@ export function RouteProvider({ children }: PropsWithChildren) {
       setSavedRoutes(before);
       Alert.alert(
         wasSaved ? "Couldn't remove the route" : "Couldn't save the route",
+        e instanceof Error ? e.message : 'Please try again.',
+      );
+    }
+  }
+
+  async function toggleSavedPlace(place: PlaceSnapshot) {
+    const wasSaved = savedPlaces.some((p) => p.id === place.id);
+    const before = savedPlaces;
+    setSavedPlaces(wasSaved ? before.filter((p) => p.id !== place.id) : [place, ...before]);
+    if (!online) return; // Guest: doar local
+
+    try {
+      if (wasSaved) await deleteSavedPlace(token!, place.id);
+      else await savePlace(token!, place);
+    } catch (e) {
+      setSavedPlaces(before);
+      Alert.alert(
+        wasSaved ? "Couldn't remove the place" : "Couldn't save the place",
         e instanceof Error ? e.message : 'Please try again.',
       );
     }
@@ -235,8 +265,8 @@ export function RouteProvider({ children }: PropsWithChildren) {
         addDelay: (min) => update((w) => ({ ...w, delayMin: w.delayMin + min, snoozedLate: null })),
         snoozeLate: (lateMin) => update((w) => ({ ...w, snoozedLate: lateMin })),
         savedPlaces,
-        toggleSavedPlace: (id) =>
-          setSavedPlaces((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id])),
+        isPlaceSaved: (id) => savedPlaces.some((p) => p.id === id),
+        toggleSavedPlace,
       }}>
       {children}
     </RouteContext.Provider>

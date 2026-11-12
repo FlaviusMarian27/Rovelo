@@ -23,6 +23,9 @@ mvn spring-boot:run         # pornește serverul pe portul 8080
 | GET    | `/api/routes`         | Bearer | rutele salvate, cele mai noi primele           |
 | POST   | `/api/routes`         | Bearer | body = ruta (JSON) → `{id, savedAt, route}`    |
 | DELETE | `/api/routes/{id}`    | Bearer | șterge o rută salvată (doar a ta)              |
+| GET    | `/api/places`         | Bearer | locurile salvate, cele mai noi primele         |
+| PUT    | `/api/places/{key}`   | Bearer | body = locul (JSON); salvează / actualizează   |
+| DELETE | `/api/places/{key}`   | Bearer | scoate locul din salvate                       |
 
 Erorile sunt JSON: `{"error": "..."}`, plus `"fields"` la validare.
 Coduri: 400 date invalide, 401 fără token / token invalid / parolă greșită, 409 email deja folosit.
@@ -58,4 +61,5 @@ Tabelele le creează Hibernate la pornire (`ddl-auto: update`). Ca să te uiți 
 ```bash
 docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, name, email, created_at from users;'
 docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select id, user_id, saved_at, left(route_json, 60) from saved_routes;'
+docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select place_key, saved_at, left(place_json, 60) from saved_places;'
 ```

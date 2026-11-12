@@ -26,7 +26,7 @@ import { findPlace, placeStories } from '@/data/mock';
 
 export default function PlaceScreen() {
   const { id, photo } = useLocalSearchParams<{ id: string; photo?: string }>();
-  const { activeRoute, addStop, savedPlaces, toggleSavedPlace } = useRoute();
+  const { activeRoute, addStop, isPlaceSaved, toggleSavedPlace } = useRoute();
   const place = findPlace(id);
   const story = placeStories[id];
 
@@ -44,7 +44,7 @@ export default function PlaceScreen() {
   }
 
   const inRoute = !!activeRoute?.stops.some((s) => s.id === place.id);
-  const saved = savedPlaces.includes(place.id);
+  const saved = isPlaceSaved(place.id);
 
   function onAdd() {
     const res = addStop(place!);
@@ -110,7 +110,7 @@ export default function PlaceScreen() {
           title={saved ? 'Saved' : 'Save'}
           icon={saved ? BookmarkCheck : Bookmark}
           variant="outline"
-          onPress={() => toggleSavedPlace(place.id)}
+          onPress={() => toggleSavedPlace({ ...place, story })}
         />
       </SafeAreaView>
     </View>
