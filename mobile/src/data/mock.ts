@@ -1,6 +1,6 @@
 // Date false până există backend-ul și agentul AI.
 // Coordonatele sunt reale (aproximativ) în Timișoara.
-import type { Duration, Interest, PlaceStory, Route, StartPoint, Stop } from '@/types';
+import type { Duration, Interest, PlaceStory, Route, Stop } from '@/types';
 import { buildRoute } from '@/utils/geo';
 
 export const durations: Duration[] = ['1h', '2h', '3h+'];
@@ -12,15 +12,6 @@ export const interests: { id: Interest; label: string }[] = [
   { id: 'parks', label: 'Parks' },
   { id: 'art', label: 'Art' },
 ];
-
-export const startPoints: StartPoint[] = [
-  { id: 'gps', label: 'My location (GPS)', isGps: true },
-  { id: 'victoriei', label: 'Piața Victoriei', coord: { latitude: 45.7537, longitude: 21.2257 } },
-  { id: 'unirii', label: 'Piața Unirii', coord: { latitude: 45.7578, longitude: 21.2291 } },
-  { id: 'gara', label: 'Gara de Nord', coord: { latitude: 45.7509, longitude: 21.2079 } },
-];
-
-export const currentCity = 'Timișoara';
 
 // Locuri (ce va întoarce search_places din OpenStreetMap).
 export const places = {

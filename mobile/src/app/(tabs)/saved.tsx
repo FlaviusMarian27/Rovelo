@@ -1,8 +1,9 @@
 // Saved: rutele salvate (din Your route, iconița cu semn de carte) — pe server, pe contul tău —
 // și locurile salvate (din Place story), tot pe server.
-// Tragi în jos ca să reîncarci lista de pe server.
+// Tragi în jos ca să reîncarci lista de pe server. Chip-urile de sus filtrează: All / Routes / Places.
 import { router } from 'expo-router';
 import { Bookmark, ChevronRight, Landmark } from 'lucide-react-native';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RouteThumb } from '@/components/route/route-thumb';
+import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
@@ -27,6 +29,10 @@ export default function SavedScreen() {
     useRoute();
   const places = savedPlaces; // datele vin salvate cu tot cu poveste
   const empty = places.length === 0 && savedRoutes.length === 0;
+  const [filter, setFilter] = useState<'all' | 'routes' | 'places'>('all');
+  const showRoutes = filter !== 'places';
+  const showPlaces = filter !== 'routes';
+  const showHeadings = filter === 'all'; // la un singur tip, chip-ul ales spune deja ce vezi
 
   function open(route: Route) {
     const walking =
@@ -58,50 +64,79 @@ export default function SavedScreen() {
           action={{ title: 'Plan a walk', onPress: () => router.navigate('/home') }}
         />
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={savedLoading}
-              onRefresh={reloadSaved}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
+        <>
+          <View style={styles.filters}>
+            <Chip
+              label={`All · ${savedRoutes.length + places.length}`}
+              selected={filter === 'all'}
+              onPress={() => setFilter('all')}
             />
-          }>
-          {savedRoutes.length > 0 && (
-            <Text style={styles.section}>Routes · {savedRoutes.length}</Text>
-          )}
-          {savedRoutes.map((r) => (
-            <Card
-              key={r.id}
-              onPress={() => open(r)}
-              thumb={<RouteThumb route={r} />}
-              title={r.title}
-              meta={`${formatMinutes(r.totalMinutes)} · ${r.stops.length} stops`}
-              tags={r.tags?.join(' · ')}
+            <Chip
+              label={`Routes · ${savedRoutes.length}`}
+              selected={filter === 'routes'}
+              onPress={() => setFilter('routes')}
             />
-          ))}
+            <Chip
+              label={`Places · ${places.length}`}
+              selected={filter === 'places'}
+              onPress={() => setFilter('places')}
+            />
+          </View>
+          <ScrollView
+            contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl
+                refreshing={savedLoading}
+                onRefresh={reloadSaved}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
+            }>
+            {showHeadings && savedRoutes.length > 0 && (
+              <Text style={styles.section}>Routes · {savedRoutes.length}</Text>
+            )}
+            {showRoutes && savedRoutes.length === 0 && filter === 'routes' && (
+              <Text style={styles.none}>No saved routes yet. Tap the bookmark on Your route.</Text>
+            )}
+            {showRoutes &&
+              savedRoutes.map((r) => (
+                <Card
+                  key={r.id}
+                  onPress={() => open(r)}
+                  thumb={<RouteThumb route={r} />}
+                  title={r.title}
+                  meta={`${formatMinutes(r.totalMinutes)} · ${r.stops.length} stops`}
+                  tags={r.tags?.join(' · ')}
+                />
+              ))}
 
-          {places.length > 0 && (
-            <Text style={[styles.section, savedRoutes.length > 0 && { marginTop: spacing.md }]}>
-              Places · {places.length}
-            </Text>
-          )}
-          {places.map((p) => (
-            <Card
-              key={p.id}
-              onPress={() => router.push({ pathname: '/route/place/[id]', params: { id: p.id } })}
-              thumb={
-                <View style={styles.placeThumb}>
-                  <Landmark size={26} color={colors.primary} strokeWidth={1.5} />
-                </View>
-              }
-              title={p.name}
-              meta={`${p.visitMinutes} min visit`}
-              tags={p.story?.category}
-            />
-          ))}
-        </ScrollView>
+            {showHeadings && places.length > 0 && (
+              <Text style={[styles.section, savedRoutes.length > 0 && { marginTop: spacing.md }]}>
+                Places · {places.length}
+              </Text>
+            )}
+            {showPlaces && places.length === 0 && filter === 'places' && (
+              <Text style={styles.none}>No saved places yet. Tap Save on a place's story.</Text>
+            )}
+            {showPlaces &&
+              places.map((p) => (
+                <Card
+                  key={p.id}
+                  onPress={() =>
+                    router.push({ pathname: '/route/place/[id]', params: { id: p.id } })
+                  }
+                  thumb={
+                    <View style={styles.placeThumb}>
+                      <Landmark size={26} color={colors.primary} strokeWidth={1.5} />
+                    </View>
+                  }
+                  title={p.name}
+                  meta={`${p.visitMinutes} min visit`}
+                  tags={p.story?.category}
+                />
+              ))}
+          </ScrollView>
+        </>
       )}
     </SafeAreaView>
   );
@@ -157,7 +192,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },
+  filters: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
   list: { padding: spacing.lg, gap: spacing.md - 4 },
+  none: {
+    marginTop: spacing.lg,
+    textAlign: 'center',
+    fontFamily: fonts.regular,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
   loading: { marginTop: spacing.xxl },
   section: {
     fontFamily: fonts.semibold,

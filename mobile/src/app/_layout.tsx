@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplash } from '@/components/animated-splash';
 import { colors } from '@/constants/theme';
+import { CityProvider } from '@/context/city';
 import { RouteProvider } from '@/context/route';
 import { SessionProvider, useSession } from '@/context/session';
 import { TransitionProvider } from '@/context/transition';
@@ -35,9 +36,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SessionProvider>
         <StatusBar style={splashDone ? 'dark' : 'light'} />
-        <TransitionProvider>
-          <RootStack />
-        </TransitionProvider>
+        <CityProvider>
+          <TransitionProvider>
+            <RootStack />
+          </TransitionProvider>
+        </CityProvider>
         {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
       </SessionProvider>
     </GestureHandlerRootView>

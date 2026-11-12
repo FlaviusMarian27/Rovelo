@@ -11,6 +11,13 @@ export type Interest = 'architecture' | 'history' | 'coffee' | 'parks' | 'art';
 
 export type Coord = { latitude: number; longitude: number };
 
+export type City = {
+  id: string;
+  name: string;
+  country?: string; // cod ISO, ex. "RO"
+  coord: Coord; // centrul orașului
+};
+
 export type StartPoint = {
   id: string;
   label: string;
@@ -19,6 +26,7 @@ export type StartPoint = {
 };
 
 export type WalkPreferences = {
+  city: City;
   duration: Duration;
   interests: Interest[];
   start: StartPoint;
