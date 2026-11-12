@@ -8,20 +8,23 @@ import {
   Trash2,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { LanguageSheet } from '@/components/language-sheet';
 import { Button } from '@/components/ui/button';
 import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useTransition } from '@/context/transition';
-import { LANGUAGES, setLanguage } from '@/i18n';
+import { LANGUAGES } from '@/i18n';
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { user, signOut: endSession, deleteAccount } = useSession();
   const { exit } = useTransition();
+  const [languageOpen, setLanguageOpen] = useState(false);
   if (!user) return null;
 
   const signOut = () => exit(endSession);
@@ -40,12 +43,6 @@ export default function ProfileScreen() {
     ]);
 
   const currentLanguage = LANGUAGES.find((l) => l.code === i18n.language)?.label ?? 'English';
-  // Cu 2 limbi ajunge un Alert; la mai multe limbi îl schimbăm cu o listă.
-  const chooseLanguage = () =>
-    Alert.alert(t('profile.language'), undefined, [
-      ...LANGUAGES.map((l) => ({ text: l.label, onPress: () => setLanguage(l.code) })),
-      { text: t('common.cancel'), style: 'cancel' as const },
-    ]);
 
   const initials = user.name
     .split(' ')
@@ -72,7 +69,7 @@ export default function ProfileScreen() {
             icon={Languages}
             label={t('profile.language')}
             value={currentLanguage}
-            onPress={chooseLanguage}
+            onPress={() => setLanguageOpen(true)}
             last
           />
         </View>
@@ -99,6 +96,8 @@ export default function ProfileScreen() {
           </View>
         )}
       </ScrollView>
+
+      <LanguageSheet visible={languageOpen} onClose={() => setLanguageOpen(false)} />
     </SafeAreaView>
   );
 }
