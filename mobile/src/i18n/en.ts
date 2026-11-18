@@ -85,6 +85,7 @@ const en = {
     generating: 'Planning your walk…',
     cityLabel: 'City: {{city}}. Change city',
     locating: 'Locating…',
+    fromLocation: 'Starting from your location',
   },
   interests: {
     architecture: 'Architecture',

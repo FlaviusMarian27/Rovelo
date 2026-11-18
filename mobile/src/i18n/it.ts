@@ -92,6 +92,7 @@ const it: Translations = {
     generating: 'Stiamo pianificando la passeggiata…',
     cityLabel: 'Città: {{city}}. Cambia città',
     locating: 'Localizzazione…',
+    fromLocation: 'Partiamo dalla tua posizione',
   },
   interests: {
     architecture: 'Architettura',

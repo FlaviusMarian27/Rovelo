@@ -97,6 +97,7 @@ const ro: RoTranslations = {
     generating: 'Îți planificăm plimbarea…',
     cityLabel: 'Oraș: {{city}}. Schimbă orașul',
     locating: 'Te localizăm…',
+    fromLocation: 'Pornim de la locația ta',
   },
   interests: {
     architecture: 'Arhitectură',

@@ -5,6 +5,7 @@ import {
   Coffee,
   History,
   Landmark,
+  LocateFixed,
   MapPin,
   Palette,
   Sparkles,
@@ -12,7 +13,7 @@ import {
   UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -21,14 +22,12 @@ import { CityPicker } from '@/components/city-picker';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Segmented } from '@/components/ui/segmented';
-import { StartSelect } from '@/components/ui/select';
 import { fonts, fontSize, spacing } from '@/constants/theme';
 import { useCity } from '@/context/city';
 import { useRoute } from '@/context/route';
 import { makeStyles, useTheme } from '@/context/theme';
-import { startPointsFor } from '@/data/cities';
 import { durations, interests } from '@/data/mock';
-import type { Duration, Interest, StartPoint } from '@/types';
+import type { Duration, Interest } from '@/types';
 
 const interestIcons: Record<Interest, LucideIcon> = {
   architecture: Landmark,
@@ -48,19 +47,17 @@ export default function HomeScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [duration, setDuration] = useState<Duration>('2h');
   const [selected, setSelected] = useState<Interest[]>(['architecture', 'history']);
-  const startPoints = startPointsFor(city);
-  const [start, setStart] = useState<StartPoint>(startPoints[0]);
-
-  // Alt oraș → punctele de start se schimbă; revenim la GPS.
-  useEffect(() => {
-    setStart(startPointsFor(city)[0]);
-  }, [city]);
-
   const toggle = (id: Interest) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   async function onGenerate() {
-    const route = await generateRoute({ city, duration, interests: selected, start });
+    // Pornim mereu de la tine (GPS); fără GPS sau dacă ești în alt oraș, din centrul orașului ales
+    const route = await generateRoute({
+      city,
+      duration,
+      interests: selected,
+      start: { id: 'gps', label: t('start.gps'), isGps: true },
+    });
     if (route) router.navigate('/route');
   }
 
@@ -98,12 +95,10 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <Text style={styles.section}>{t('home.start')}</Text>
-        <StartSelect
-          options={startPoints}
-          value={startPoints.find((p) => p.id === start.id) ?? startPoints[0]}
-          onChange={setStart}
-        />
+        <View style={styles.fromRow}>
+          <LocateFixed size={16} color={colors.textSecondary} strokeWidth={1.75} />
+          <Text style={styles.fromText}>{t('home.fromLocation')}</Text>
+        </View>
       </ScrollView>
 
       <View style={styles.bottom}>
@@ -152,6 +147,8 @@ const useStyles = makeStyles((colors) => ({
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
+  fromRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
+  fromText: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.textSecondary },
   section: {
     fontFamily: fonts.semibold,
     fontSize: fontSize.md + 1,

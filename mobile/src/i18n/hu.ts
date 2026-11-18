@@ -93,6 +93,7 @@ const hu: Translations = {
     generating: 'Tervezzük a sétádat…',
     cityLabel: 'Város: {{city}}. Város módosítása',
     locating: 'Helymeghatározás…',
+    fromLocation: 'A helyzetedből indulunk',
   },
   interests: {
     architecture: 'Építészet',

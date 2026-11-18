@@ -31,12 +31,16 @@ import {
   updateSavedRoute,
 } from '@/services/routes-api';
 import type { Coord, Route, Stop, WalkPreferences } from '@/types';
-import { buildRoute, withStreets } from '@/utils/geo';
+import { buildRoute, distanceMeters, withStreets } from '@/utils/geo';
 import i18n from '@/i18n';
 
 // Aceeași rută cu altă listă / ordine de opriri. Id-ul depinde de ordine,
 // deci o rută editată e altă rută (și harta se reîncadrează).
-// De unde pornește ruta: punctul ales sau, la "Locația mea", GPS-ul (altfel centrul orașului).
+// Cât de departe de oraș poți fi ca ruta să pornească de la tine (altfel: din centrul orașului ales).
+const SAME_CITY_M = 25_000;
+
+// De unde pornește ruta: de la tine (GPS). Fără GPS, sau dacă ești în alt oraș decât cel ales,
+// din centrul orașului.
 async function startCoord(prefs: WalkPreferences): Promise<Coord> {
   if (prefs.start.coord) return prefs.start.coord;
   try {
@@ -45,7 +49,8 @@ async function startCoord(prefs: WalkPreferences): Promise<Coord> {
       const pos =
         (await Location.getLastKnownPositionAsync({ maxAge: 5 * 60_000 })) ??
         (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
-      return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      const here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      if (distanceMeters(here, prefs.city.coord) <= SAME_CITY_M) return here;
     }
   } catch {
     // fără GPS → centrul orașului

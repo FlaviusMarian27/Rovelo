@@ -1,10 +1,6 @@
 // Orașele din lista de alegere. Mai târziu lista poate veni din backend (geocoding OSM),
 // dar orice oraș detectat din GPS merge oricum, chiar dacă nu e aici.
-import type { City, StartPoint } from '@/types';
-import i18n from '@/i18n';
-
-/** Singurul oraș cu rute până vine generarea din backend (mock-urile sunt de aici). */
-export const TEST_CITY_ID = 'timisoara';
+import type { City } from '@/types';
 
 export const cities: City[] = [
   {
@@ -71,24 +67,4 @@ export const normalize = (s: string) =>
 export function findCityByName(name: string) {
   const n = normalize(name);
   return cities.find((c) => normalize(c.name) === n || c.id === n);
-}
-
-// Puncte de start: GPS mereu; pentru Timișoara și câteva piețe, altfel centrul orașului.
-const timisoaraStarts: StartPoint[] = [
-  { id: 'victoriei', label: 'Piața Victoriei', coord: { latitude: 45.7537, longitude: 21.2257 } },
-  { id: 'unirii', label: 'Piața Unirii', coord: { latitude: 45.7578, longitude: 21.2291 } },
-  { id: 'gara', label: 'Gara de Nord', coord: { latitude: 45.7509, longitude: 21.2079 } },
-];
-
-export function startPointsFor(city: City): StartPoint[] {
-  const gps: StartPoint = { id: 'gps', label: i18n.t('start.gps'), isGps: true };
-  if (city.id === TEST_CITY_ID) return [gps, ...timisoaraStarts];
-  return [
-    gps,
-    {
-      id: `center:${city.id}`,
-      label: i18n.t('start.cityCentre', { city: city.name }),
-      coord: city.coord,
-    },
-  ];
 }
