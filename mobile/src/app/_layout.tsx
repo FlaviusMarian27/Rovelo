@@ -5,6 +5,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/inter';
 import { Stack } from 'expo-router';
+import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -52,10 +53,18 @@ export default function RootLayout() {
   );
 }
 
-// Text alb peste splash-ul roșu, apoi după temă: închis pe light, deschis pe dark.
+// Barele sistemului (sus: ceas/baterie, jos pe Android: butoanele) urmează tema aplicației,
+// nu pe a telefonului: conținut închis pe light, deschis pe dark; alb peste splash-ul roșu.
+// Pe Android, bara de jos devine astfel albă pe light (în loc de gri) și închisă pe dark.
 function ThemedStatusBar({ overSplash }: { overSplash: boolean }) {
   const { scheme } = useTheme();
-  return <StatusBar style={overSplash || scheme === 'dark' ? 'light' : 'dark'} />;
+  const content = overSplash || scheme === 'dark' ? 'light' : 'dark';
+  return (
+    <>
+      <StatusBar style={content} />
+      <NavigationBar style={content} />
+    </>
+  );
 }
 
 // Stack.Protected: ecranele de auth există doar când nu ești logat, taburile doar când ești.
