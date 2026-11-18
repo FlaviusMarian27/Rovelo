@@ -4,11 +4,12 @@ import {
   Inter_600SemiBold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { Stack } from 'expo-router';
 import { NavigationBar } from 'expo-navigation-bar';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as SystemUI from 'expo-system-ui';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -57,8 +58,15 @@ export default function RootLayout() {
 // nu pe a telefonului: conținut închis pe light, deschis pe dark; alb peste splash-ul roșu.
 // Pe Android, bara de jos devine astfel albă pe light (în loc de gri) și închisă pe dark.
 function ThemedStatusBar({ overSplash }: { overSplash: boolean }) {
-  const { scheme } = useTheme();
+  const { scheme, colors } = useTheme();
   const content = overSplash || scheme === 'dark' ? 'light' : 'dark';
+
+  // Fundalul ferestrei native. Bara de jos e transparentă (edge-to-edge), deci prin ea se vede
+  // fundalul ăsta; altfel rămâne cel al telefonului (gri/negru când telefonul e pe dark).
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch(() => {});
+  }, [colors.background]);
+
   return (
     <>
       <StatusBar style={content} />
