@@ -27,6 +27,7 @@ import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
 import { makeStyles, useTheme } from '@/context/theme';
 import type { Leg, Route, Stop } from '@/types';
+import { useKeyboardVisible } from '@/hooks/use-keyboard';
 import { formatMinutes } from '@/utils/geo';
 
 export default function RouteScreen() {
@@ -37,6 +38,7 @@ export default function RouteScreen() {
   const mapRef = useRef<RouteMapHandle>(null);
   const [focused, setFocused] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
+  const keyboard = useKeyboardVisible();
 
   if (!activeRoute) {
     return (
@@ -79,7 +81,10 @@ export default function RouteScreen() {
         <View style={[styles.headerSide, { alignItems: 'flex-end' }]}>
           {!inProgress && (
             <Pressable
-              onPress={() => setEditing((e) => !e)}
+              onPress={() => {
+                Keyboard.dismiss();
+                setEditing((e) => !e);
+              }}
               hitSlop={10}
               accessibilityRole="button">
               <Text style={styles.headerAction}>
@@ -90,10 +95,13 @@ export default function RouteScreen() {
         </View>
       </View>
 
-      <View style={styles.map}>
-        {/* key: harta se reface când se schimbă ruta (altă ordine, alt număr de opriri) */}
-        <RouteMap key={r.id} ref={mapRef} route={r} />
-      </View>
+      {/* Cât scrii numele în Edit, harta face loc listei (tastatura ia jumătate din ecran) */}
+      {!(editing && keyboard) && (
+        <View style={styles.map}>
+          {/* key: harta se reface când se schimbă ruta (altă ordine, alt număr de opriri) */}
+          <RouteMap key={r.id} ref={mapRef} route={r} />
+        </View>
+      )}
 
       {editing ? (
         <EditStops route={r} suggested={suggestedRoute} onDone={() => setEditing(false)} />
@@ -129,7 +137,7 @@ export default function RouteScreen() {
   );
 }
 
-// În Edit, numele se poate schimba: se salvează la Enter, când ieși din câmp sau la Gata.
+// În Edit, numele se poate schimba: se aplică pe loc (copia salvată se actualizează singură).
 type NameEdit = { value: string; onChange: (v: string) => void; onCommit: () => void };
 
 function RouteSummary({ route: r, name }: { route: Route; name?: NameEdit }) {
@@ -181,7 +189,14 @@ function EditStops({
   const { t } = useTranslation();
   const { setStops, resetToSuggested, renameRoute } = useRoute();
   const [name, setName] = useState(r.title);
-  const commitName = () => (name.trim() ? renameRoute(name) : setName(r.title));
+  const changeName = (v: string) => {
+    setName(v);
+    if (v.trim()) renameRoute(v);
+  };
+  const commitName = () => {
+    if (!name.trim()) setName(r.title); // gol → revine la numele de acum
+  };
+  const keyboard = useKeyboardVisible();
   const changed = !!suggested && suggested.id !== r.id;
   const diff = suggested ? r.totalMinutes - suggested.totalMinutes : 0;
   const diffText =
@@ -207,7 +222,7 @@ function EditStops({
           <View style={styles.editHeader}>
             <RouteSummary
               route={r}
-              name={{ value: name, onChange: setName, onCommit: commitName }}
+              name={{ value: name, onChange: changeName, onCommit: commitName }}
             />
             <Text style={styles.hint}>{t('route.hint')}</Text>
           </View>
@@ -216,45 +231,47 @@ function EditStops({
         style={styles.flex}
       />
 
-      <View style={styles.bottom}>
-        {changed && (
-          <View style={styles.diffRow}>
-            <Text style={[styles.diffText, diff > 0 && styles.diffWorse]}>{diffText}</Text>
-            <Pressable
-              onPress={resetToSuggested}
-              hitSlop={8}
-              accessibilityRole="button"
-              style={styles.reset}>
-              <RotateCcw size={14} color={colors.primary} />
-              <Text style={styles.resetText}>{t('route.reset')}</Text>
-            </Pressable>
-          </View>
-        )}
-        <Pressable
-          onPress={() => {
-            // Explore centrat pe rută, ca să vezi ce mai e în jur
-            const n = r.stops.length;
-            const lat = r.stops.reduce((t, s) => t + s.coord.latitude, 0) / n;
-            const lon = r.stops.reduce((t, s) => t + s.coord.longitude, 0) / n;
-            router.navigate({
-              pathname: '/explore',
-              params: { lat: lat.toFixed(5), lon: lon.toFixed(5) },
-            });
-          }}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.addPlaces, pressed && { opacity: 0.6 }]}>
-          <Plus size={18} color={colors.primary} strokeWidth={2} />
-          <Text style={styles.addPlacesText}>{t('route.addPlaces')}</Text>
-        </Pressable>
-        <Button
-          title={t('common.done')}
-          onPress={() => {
-            commitName(); // dacă încă scriai în câmpul cu numele
-            Keyboard.dismiss();
-            onDone();
-          }}
-        />
-      </View>
+      {!keyboard && (
+        <View style={styles.bottom}>
+          {changed && (
+            <View style={styles.diffRow}>
+              <Text style={[styles.diffText, diff > 0 && styles.diffWorse]}>{diffText}</Text>
+              <Pressable
+                onPress={resetToSuggested}
+                hitSlop={8}
+                accessibilityRole="button"
+                style={styles.reset}>
+                <RotateCcw size={14} color={colors.primary} />
+                <Text style={styles.resetText}>{t('route.reset')}</Text>
+              </Pressable>
+            </View>
+          )}
+          <Pressable
+            onPress={() => {
+              // Explore centrat pe rută, ca să vezi ce mai e în jur
+              const n = r.stops.length;
+              const lat = r.stops.reduce((t, s) => t + s.coord.latitude, 0) / n;
+              const lon = r.stops.reduce((t, s) => t + s.coord.longitude, 0) / n;
+              router.navigate({
+                pathname: '/explore',
+                params: { lat: lat.toFixed(5), lon: lon.toFixed(5) },
+              });
+            }}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.addPlaces, pressed && { opacity: 0.6 }]}>
+            <Plus size={18} color={colors.primary} strokeWidth={2} />
+            <Text style={styles.addPlacesText}>{t('route.addPlaces')}</Text>
+          </Pressable>
+          <Button
+            title={t('common.done')}
+            onPress={() => {
+              commitName();
+              Keyboard.dismiss();
+              onDone();
+            }}
+          />
+        </View>
+      )}
     </>
   );
 }

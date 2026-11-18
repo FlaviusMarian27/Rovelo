@@ -17,6 +17,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true, // Android: bara de taburi nu mai urcă deasupra tastaturii
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 12 },
