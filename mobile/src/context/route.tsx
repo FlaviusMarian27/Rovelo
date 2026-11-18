@@ -22,7 +22,7 @@ import {
   savePlace,
   type PlaceSnapshot,
 } from '@/services/places-api';
-import { planRoute } from '@/services/planner-api';
+import { planRoute, toStop } from '@/services/planner-api';
 import { fetchWalk } from '@/services/walk-api';
 import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
 import type { Coord, Route, Stop, WalkPreferences } from '@/types';
@@ -87,7 +87,8 @@ type RouteState = {
   clearRoute: () => void;
   /** Înlocuiește ruta (după Replan / Add to route) fără să piardă progresul. */
   replaceRoute: (route: Route) => void;
-  addStop: (stop: Stop) => 'added' | 'exists' | 'no-route';
+  /** Fără rută activă, începe una nouă (a ta) cu locul ăsta. */
+  addStop: (stop: Stop) => 'added' | 'exists' | 'created';
   /** Ruta propusă inițial (de "agent"), ca să poți compara și reveni după ce o editezi. */
   suggestedRoute: Route | null;
   /** Noua ordine / listă de opriri, aleasă de tine. Ruta se recalculează. */
@@ -231,14 +232,7 @@ export function RouteProvider({ children }: PropsWithChildren) {
         { start, duration: prefs.duration, interests: prefs.interests },
         online ? token : null,
       );
-      const stops: Stop[] = plan.stops.map((s) => ({
-        id: s.id,
-        name: s.name,
-        kind: s.kind,
-        blurb: i18n.t(`kinds.${s.kind}`, { defaultValue: '' }),
-        coord: s.coord,
-        visitMinutes: s.visitMinutes,
-      }));
+      const stops: Stop[] = plan.stops.map(toStop);
       const route = buildRoute(
         {
           id: `gen-${Date.now()}`,
@@ -278,8 +272,23 @@ export function RouteProvider({ children }: PropsWithChildren) {
     setWalk((w) => (w ? { ...w, routeId: route.id } : w));
   }
 
-  function addStop(stop: Stop) {
-    if (!activeRoute) return 'no-route';
+  function addStop(stop: Stop): 'added' | 'exists' | 'created' {
+    if (!activeRoute) {
+      // Rută construită de mână din Explore: o începi tu, alegi tu ordinea
+      openRoute(
+        buildRoute(
+          {
+            id: `custom-${Date.now()}`,
+            title: i18n.t('route.customTitle'),
+            duration: '1h',
+            pace: i18n.t('route.pace'),
+            tags: [],
+          },
+          [stop],
+        ),
+      );
+      return 'created';
+    }
     if (activeRoute.stops.some((s) => s.id === stop.id)) return 'exists';
     // Cine creează ruta alege ordinea → noul loc intră la final; se poate muta din Edit.
     replaceRoute(withStops(activeRoute, [...activeRoute.stops, stop]));

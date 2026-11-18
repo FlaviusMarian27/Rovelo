@@ -22,6 +22,10 @@ public class Place {
     @Column(nullable = false, length = 200)
     private String name;
 
+    /** Numele pentru căutare: litere mici, fără diacritice (PlannerService.normalize). */
+    @Column(length = 200)
+    private String searchName;
+
     /** PoiKind.id(): "cafe", "museum"… */
     @Column(nullable = false, length = 20)
     private String kind;

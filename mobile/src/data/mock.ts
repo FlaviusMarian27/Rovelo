@@ -11,6 +11,7 @@ export const interests: { id: Interest; label: string }[] = [
   { id: 'coffee', label: 'Coffee' },
   { id: 'parks', label: 'Parks' },
   { id: 'art', label: 'Art' },
+  { id: 'food', label: 'Food & drinks' },
 ];
 
 // Locuri (ce va întoarce search_places din OpenStreetMap).

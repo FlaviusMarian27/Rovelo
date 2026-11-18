@@ -22,7 +22,7 @@ export type ProfileInput = {
 
 export type Duration = '1h' | '2h' | '3h+';
 
-export type Interest = 'architecture' | 'history' | 'coffee' | 'parks' | 'art';
+export type Interest = 'architecture' | 'history' | 'coffee' | 'parks' | 'art' | 'food';
 
 export type Coord = { latitude: number; longitude: number };
 

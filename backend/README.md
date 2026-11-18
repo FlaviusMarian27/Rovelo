@@ -47,6 +47,7 @@ docker compose up -d osrm           # apoi pornește odată cu baza: docker comp
 | DELETE | `/api/me`             | Bearer | șterge contul (și rutele salvate)              |
 | POST   | `/api/routes/generate` | –     | `{start:{latitude,longitude}, duration: 1h\|2h\|3h+, interests:[...]}` → `{stops:[{id,name,kind,coord,visitMinutes}], totalMinutes}` (locuri reale din OpenStreetMap) |
 | POST   | `/api/routes/walk`    | –      | `{points:[coord,...]}` → `{legs:[{meters,walkMinutes}], path, waypoints}` (drumul pe jos, OSRM) |
+| GET    | `/api/explore`        | –      | `?lat&lon&radius&kinds=cafe,bar` sau `?lat&lon&q=catedrala` → locuri din `places` |
 | GET    | `/api/routes`         | Bearer | rutele salvate, cele mai noi primele           |
 | POST   | `/api/routes`         | Bearer | body = ruta (JSON) → `{id, savedAt, route}`    |
 | DELETE | `/api/routes/{id}`    | Bearer | șterge o rută salvată (doar a ta)              |

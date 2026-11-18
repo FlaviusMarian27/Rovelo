@@ -11,6 +11,7 @@ NAME="$(basename "$REGION")"
 DIR="data/osm"
 mkdir -p "$DIR"
 
+# Fără download din nou: ./scripts/import-places.sh păstrează fișierul .osm.pbf deja descărcat.
 # 1. Harta regiunii (~300 MB pentru România), descărcată o singură dată
 if [ ! -f "$DIR/$NAME-latest.osm.pbf" ]; then
   echo "→ Descarc $REGION de pe Geofabrik…"
@@ -20,8 +21,9 @@ fi
 # 2. Păstrăm doar tipurile de locuri care ne interesează (vezi PoiKind.java)
 echo "→ Filtrez locurile…"
 osmium tags-filter "$DIR/$NAME-latest.osm.pbf" \
-  nwr/amenity=cafe,place_of_worship,theatre,arts_centre \
-  nwr/tourism=museum,gallery,artwork,attraction \
+  nwr/amenity=cafe,ice_cream,restaurant,bar,pub,biergarten,marketplace,fountain,place_of_worship,theatre,arts_centre \
+  nwr/tourism=museum,gallery,artwork,attraction,viewpoint \
+  nwr/place=square \
   nwr/historic \
   nwr/leisure=park,garden \
   nwr/building=cathedral,church,chapel,palace,castle \

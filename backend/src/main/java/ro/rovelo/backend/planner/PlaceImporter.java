@@ -36,10 +36,11 @@ public class PlaceImporter implements ApplicationRunner {
     private static final int BATCH = 1000;
 
     private static final String UPSERT = """
-            INSERT INTO places (id, name, kind, lat, lon, base_score, wikidata, wikipedia)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO places (id, name, search_name, kind, lat, lon, base_score, wikidata, wikipedia)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
-              name = EXCLUDED.name, kind = EXCLUDED.kind, lat = EXCLUDED.lat, lon = EXCLUDED.lon,
+              name = EXCLUDED.name, search_name = EXCLUDED.search_name, kind = EXCLUDED.kind,
+              lat = EXCLUDED.lat, lon = EXCLUDED.lon,
               base_score = EXCLUDED.base_score, wikidata = EXCLUDED.wikidata, wikipedia = EXCLUDED.wikipedia
             """;
 
@@ -111,7 +112,7 @@ public class PlaceImporter implements ApplicationRunner {
 
         String id = osmId(f.id(), tags, center);
         return new Object[] {
-            id, truncate(name, 200), kind.id(), center[1], center[0],
+            id, truncate(name, 200), truncate(PlannerService.normalize(name), 200), kind.id(), center[1], center[0],
             PlannerService.baseScore(tags, kind),
             truncate(tags.get("wikidata"), 20), truncate(tags.get("wikipedia"), 200),
         };

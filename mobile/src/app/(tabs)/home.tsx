@@ -9,6 +9,7 @@ import {
   Palette,
   Sparkles,
   Trees,
+  UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -35,6 +36,7 @@ const interestIcons: Record<Interest, LucideIcon> = {
   coffee: Coffee,
   parks: Trees,
   art: Palette,
+  food: UtensilsCrossed,
 };
 
 export default function HomeScreen() {

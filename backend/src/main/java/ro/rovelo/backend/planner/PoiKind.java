@@ -20,7 +20,13 @@ public enum PoiKind {
     MEMORIAL(5),
     ARTWORK(5),
     ATTRACTION(15),
-    HISTORIC(10);
+    HISTORIC(10),
+    RESTAURANT(45),
+    BAR(30),
+    MARKET(20),
+    VIEWPOINT(10),
+    SQUARE(10),
+    FOUNTAIN(5);
 
     public final int visitMinutes;
 
@@ -30,11 +36,12 @@ public enum PoiKind {
 
     /** Ce tipuri de locuri se potrivesc fiecărui interes din aplicație. */
     static final Map<String, Set<PoiKind>> BY_INTEREST = Map.of(
-            "architecture", Set.of(CHURCH, CASTLE, THEATRE, ATTRACTION, HISTORIC),
-            "history", Set.of(MUSEUM, MONUMENT, MEMORIAL, CASTLE, HISTORIC, CHURCH),
+            "architecture", Set.of(CHURCH, CASTLE, THEATRE, ATTRACTION, HISTORIC, SQUARE, FOUNTAIN),
+            "history", Set.of(MUSEUM, MONUMENT, MEMORIAL, CASTLE, HISTORIC, CHURCH, SQUARE),
             "coffee", Set.of(CAFE),
-            "parks", Set.of(PARK, GARDEN),
-            "art", Set.of(GALLERY, ARTWORK, THEATRE, MUSEUM));
+            "parks", Set.of(PARK, GARDEN, VIEWPOINT),
+            "art", Set.of(GALLERY, ARTWORK, THEATRE, MUSEUM, FOUNTAIN),
+            "food", Set.of(RESTAURANT, BAR, MARKET));
 
     /** Clasifică după tag-urile OSM; null = nu ne interesează. Ordinea contează (cel mai specific primul). */
     static PoiKind classify(Map<String, String> tags) {
@@ -44,7 +51,15 @@ public enum PoiKind {
         String leisure = tags.getOrDefault("leisure", "");
         String building = tags.getOrDefault("building", "");
 
-        if (amenity.equals("cafe")) return CAFE;
+        String place = tags.getOrDefault("place", "");
+
+        if (amenity.equals("cafe") || amenity.equals("ice_cream")) return CAFE;
+        if (amenity.equals("restaurant")) return RESTAURANT;
+        if (amenity.equals("bar") || amenity.equals("pub") || amenity.equals("biergarten")) return BAR;
+        if (amenity.equals("marketplace")) return MARKET;
+        if (amenity.equals("fountain")) return FOUNTAIN;
+        if (tourism.equals("viewpoint")) return VIEWPOINT;
+        if (place.equals("square")) return SQUARE;
         if (tourism.equals("museum")) return MUSEUM;
         if (tourism.equals("gallery") || amenity.equals("arts_centre")) return GALLERY;
         if (leisure.equals("park")) return PARK;

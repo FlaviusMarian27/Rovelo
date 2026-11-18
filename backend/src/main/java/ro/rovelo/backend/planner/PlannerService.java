@@ -45,7 +45,11 @@ public class PlannerService {
             PoiKind.GARDEN, 1,
             PoiKind.MEMORIAL, 1,
             PoiKind.ARTWORK, 2,
-            PoiKind.CHURCH, 3));
+            PoiKind.CHURCH, 3,
+            PoiKind.RESTAURANT, 1,
+            PoiKind.BAR, 1,
+            PoiKind.MARKET, 1,
+            PoiKind.FOUNTAIN, 2));
 
     private record Poi(String id, String name, PoiKind kind, double lat, double lon, double score) {}
 
@@ -136,7 +140,11 @@ public class PlannerService {
                     filters.add("[\"tourism\"=\"museum\"]");
                 }
                 case "coffee" -> filters.add("[\"amenity\"=\"cafe\"]");
-                case "parks" -> filters.add("[\"leisure\"~\"^(park|garden)$\"]");
+                case "parks" -> {
+                    filters.add("[\"leisure\"~\"^(park|garden)$\"]");
+                    filters.add("[\"tourism\"=\"viewpoint\"]");
+                }
+                case "food" -> filters.add("[\"amenity\"~\"^(restaurant|bar|pub|biergarten|marketplace)$\"]");
                 case "art" -> {
                     filters.add("[\"tourism\"~\"^(gallery|artwork|museum)$\"]");
                     filters.add("[\"amenity\"~\"^(arts_centre|theatre)$\"]");
@@ -271,7 +279,8 @@ public class PlannerService {
         return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
     }
 
-    private static String normalize(String s) {
+    /** Pentru căutare: litere mici, fără diacritice ("Timișoara" → "timisoara"). */
+    public static String normalize(String s) {
         return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT).trim();
     }
 }

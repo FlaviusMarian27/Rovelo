@@ -21,7 +21,7 @@ public final class PlannerDtos {
     public record PlanRequest(
             @NotNull @Valid Coord start,
             @NotNull @Pattern(regexp = "1h|2h|3h\\+") String duration,
-            @NotEmpty List<@Pattern(regexp = "architecture|history|coffee|parks|art") String> interests) {
+            @NotEmpty List<@Pattern(regexp = "architecture|history|coffee|parks|art|food") String> interests) {
 
         int minutes() {
             return switch (duration) {

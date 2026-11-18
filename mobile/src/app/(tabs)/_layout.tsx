@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Bookmark, House, Route, User, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, Compass, House, Route, User, type LucideIcon } from 'lucide-react-native';
 import type { ColorValue } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -28,6 +28,10 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen name="home" options={{ title: t('tabs.home'), tabBarIcon: icon(House) }} />
       <Tabs.Screen name="route" options={{ title: t('tabs.route'), tabBarIcon: icon(Route) }} />
+      <Tabs.Screen
+        name="explore"
+        options={{ title: t('tabs.explore'), tabBarIcon: icon(Compass) }}
+      />
       <Tabs.Screen name="saved" options={{ title: t('tabs.saved'), tabBarIcon: icon(Bookmark) }} />
       <Tabs.Screen name="profile" options={{ title: t('tabs.profile'), tabBarIcon: icon(User) }} />
     </Tabs>

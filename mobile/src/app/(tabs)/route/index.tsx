@@ -9,6 +9,7 @@ import {
   Footprints,
   GripVertical,
   Navigation,
+  Plus,
   RotateCcw,
   Trash2,
 } from 'lucide-react-native';
@@ -201,6 +202,22 @@ function EditStops({
             </Pressable>
           </View>
         )}
+        <Pressable
+          onPress={() => {
+            // Explore centrat pe rută, ca să vezi ce mai e în jur
+            const n = r.stops.length;
+            const lat = r.stops.reduce((t, s) => t + s.coord.latitude, 0) / n;
+            const lon = r.stops.reduce((t, s) => t + s.coord.longitude, 0) / n;
+            router.navigate({
+              pathname: '/explore',
+              params: { lat: lat.toFixed(5), lon: lon.toFixed(5) },
+            });
+          }}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.addPlaces, pressed && { opacity: 0.6 }]}>
+          <Plus size={18} color={colors.primary} strokeWidth={2} />
+          <Text style={styles.addPlacesText}>{t('route.addPlaces')}</Text>
+        </Pressable>
         <Button title={t('common.done')} onPress={onDone} />
       </View>
     </>
@@ -403,5 +420,13 @@ const useStyles = makeStyles((colors) => ({
   diffText: { fontFamily: fonts.medium, fontSize: fontSize.sm, color: colors.textSecondary },
   diffWorse: { color: colors.text },
   reset: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  addPlaces: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 44,
+  },
+  addPlacesText: { fontFamily: fonts.semibold, fontSize: fontSize.md, color: colors.primary },
   resetText: { fontFamily: fonts.semibold, fontSize: fontSize.sm, color: colors.primary },
 }));

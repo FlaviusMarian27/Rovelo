@@ -16,7 +16,7 @@ import {
   Sun,
   type LucideIcon,
 } from 'lucide-react-native';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -26,6 +26,7 @@ import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
 import { makeStyles, useTheme } from '@/context/theme';
 import { findPlace, placeStories } from '@/data/mock';
+import { cachedPlace } from '@/services/place-cache';
 
 export default function PlaceScreen() {
   const { colors } = useTheme();
@@ -34,7 +35,11 @@ export default function PlaceScreen() {
   const { id, photo } = useLocalSearchParams<{ id: string; photo?: string }>();
   const { activeRoute, addStop, isPlaceSaved, toggleSavedPlace, savedPlaces } = useRoute();
   const savedSnapshot = savedPlaces.find((p) => p.id === id);
-  const place = findPlace(id) ?? activeRoute?.stops.find((s) => s.id === id) ?? savedSnapshot;
+  const place =
+    findPlace(id) ??
+    activeRoute?.stops.find((s) => s.id === id) ??
+    savedSnapshot ??
+    cachedPlace(id);
   const story = placeStories[id] ?? savedSnapshot?.story;
 
   if (!place) {
@@ -54,13 +59,8 @@ export default function PlaceScreen() {
   const saved = isPlaceSaved(place.id);
 
   function onAdd() {
-    const res = addStop(place!);
-    if (res === 'no-route') {
-      Alert.alert(t('place.noWalk'), t('place.noWalkText'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.planWalk'), onPress: () => router.navigate('/home') },
-      ]);
-    }
+    // fără rută activă, locul ăsta începe una nouă
+    addStop(place!);
   }
 
   const onShare = () =>
