@@ -34,6 +34,12 @@ import type { Coord, Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute, distanceMeters, withStreets } from '@/utils/geo';
 import i18n from '@/i18n';
 
+/**
+ * Id-ul "de familie" al unei rute: "gen-123:osm:node/1,…" → "gen-123". O rută editată (altă ordine,
+ * opriri scoase / adăugate) primește alt id, dar rămâne aceeași rută salvată.
+ */
+export const routeBaseId = (id: string) => id.split(':')[0];
+
 // Aceeași rută cu altă listă / ordine de opriri. Id-ul depinde de ordine,
 // deci o rută editată e altă rută (și harta se reîncadrează).
 // Cât de departe de oraș poți fi ca ruta să pornească de la tine (altfel: din centrul orașului ales).
@@ -141,8 +147,9 @@ export function RouteProvider({ children }: PropsWithChildren) {
   const [suggestedRoute, setSuggestedRoute] = useState<Route | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<Route[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
-  // id-ul rutei din aplicație → id-ul ei pe server (ca să o putem șterge)
+  // routeBaseId(ruta din aplicație) → id-ul ei pe server (ca s-o putem actualiza / șterge)
   const serverIds = useRef<Record<string, string>>({});
+  const isSaved = (id: string) => savedRoutes.some((r) => routeBaseId(r.id) === routeBaseId(id));
 
   const { user, token } = useSession();
   const online = !!token && !!user && !user.isGuest;
@@ -155,7 +162,7 @@ export function RouteProvider({ children }: PropsWithChildren) {
         listSavedRoutes(token!),
         listSavedPlaces(token!),
       ]);
-      serverIds.current = Object.fromEntries(routes.map((e) => [e.route.id, e.id]));
+      serverIds.current = Object.fromEntries(routes.map((e) => [routeBaseId(e.route.id), e.id]));
       setSavedRoutes(routes.map((e) => e.route));
       setSavedPlaces(places.map((e) => e.place));
     } catch {
@@ -173,19 +180,22 @@ export function RouteProvider({ children }: PropsWithChildren) {
 
   // Salvare / ștergere: actualizăm imediat lista, apoi serverul; la eroare revenim.
   async function toggleSavedRoute(route: Route) {
-    const wasSaved = savedRoutes.some((r) => r.id === route.id);
+    const base = routeBaseId(route.id);
+    const wasSaved = isSaved(route.id);
     const before = savedRoutes;
-    setSavedRoutes(wasSaved ? before.filter((r) => r.id !== route.id) : [route, ...before]);
+    setSavedRoutes(
+      wasSaved ? before.filter((r) => routeBaseId(r.id) !== base) : [route, ...before],
+    );
     if (!online) return; // Guest: doar local
 
     try {
       if (wasSaved) {
-        const serverId = serverIds.current[route.id];
+        const serverId = serverIds.current[base];
         if (serverId) await deleteSavedRoute(token!, serverId);
-        delete serverIds.current[route.id];
+        delete serverIds.current[base];
       } else {
         const entry = await saveRoute(token!, route);
-        serverIds.current[route.id] = entry.id;
+        serverIds.current[base] = entry.id;
       }
     } catch (e) {
       setSavedRoutes(before);
@@ -282,15 +292,32 @@ export function RouteProvider({ children }: PropsWithChildren) {
   function renameRoute(title: string) {
     const name = title.trim().slice(0, 60);
     if (!activeRoute || !name || name === activeRoute.title) return;
-    const renamed = { ...activeRoute, title: name };
-    // id-ul rămâne același → progresul și drumul pe străzi rămân
-    setActiveRoute(renamed);
-    setSuggestedRoute((cur) => (cur?.id === renamed.id ? { ...cur, title: name } : cur));
-    if (!savedRoutes.some((r) => r.id === renamed.id)) return;
-    setSavedRoutes((cur) => cur.map((r) => (r.id === renamed.id ? renamed : r)));
-    const serverId = serverIds.current[renamed.id];
-    if (online && serverId) updateSavedRoute(token!, serverId, renamed).catch(() => {});
+    // id-ul rămâne același → progresul și drumul pe străzi rămân; copia salvată se actualizează singură
+    setActiveRoute({ ...activeRoute, title: name });
+    setSuggestedRoute((cur) => (cur?.id === activeRoute.id ? { ...cur, title: name } : cur));
   }
+
+  // Ruta activă e salvată și s-a schimbat (opriri, ordine, nume, drumul pe străzi) →
+  // actualizăm și copia din Salvate, iar pe server după o mică pauză (nu la fiecare mutare).
+  useEffect(() => {
+    const route = activeRoute;
+    if (!route) return;
+    const base = routeBaseId(route.id);
+    const savedCopy = savedRoutes.find((r) => routeBaseId(r.id) === base);
+    if (!savedCopy || savedCopy === route) return;
+    setSavedRoutes((cur) => cur.map((r) => (routeBaseId(r.id) === base ? route : r)));
+    const serverId = serverIds.current[base];
+    if (!online || !serverId) return;
+    const timer = setTimeout(() => {
+      if (serverIds.current[base] !== serverId) return; // între timp a fost scoasă din Salvate
+      // La eroare spunem (altfel modificarea s-ar pierde fără să știi, la următoarea pornire)
+      updateSavedRoute(token!, serverId, route).catch((e) =>
+        Alert.alert(i18n.t('route.saveFailed'), e instanceof Error ? e.message : ''),
+      );
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRoute]);
 
   function replaceRoute(route: Route) {
     setActiveRoute(route);
@@ -357,7 +384,7 @@ export function RouteProvider({ children }: PropsWithChildren) {
         savedRoutes,
         savedLoading,
         reloadSaved,
-        isRouteSaved: (id) => savedRoutes.some((r) => r.id === id),
+        isRouteSaved: isSaved,
         toggleSavedRoute,
         openRoute,
         walk,

@@ -20,7 +20,7 @@ import { RouteThumb } from '@/components/route/route-thumb';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { fonts, fontSize, radius, spacing } from '@/constants/theme';
-import { useRoute } from '@/context/route';
+import { routeBaseId, useRoute } from '@/context/route';
 import { makeStyles, useTheme } from '@/context/theme';
 import type { Route } from '@/types';
 import { formatMinutes } from '@/utils/geo';
@@ -41,11 +41,13 @@ export default function SavedScreen() {
   function open(route: Route) {
     const walking =
       !!walk && walk.routeId === activeRoute?.id && walk.phase !== 'finished' && !!walk.startedAt;
+    const same = !!activeRoute && routeBaseId(activeRoute.id) === routeBaseId(route.id);
     const go = () => {
-      openRoute(route);
+      // e deja ruta activă (poate editată sau în mers) → doar mergem la ea, fără s-o resetăm
+      if (!same) openRoute(route);
       router.navigate('/route');
     };
-    if (walking && activeRoute?.id !== route.id) {
+    if (walking && !same) {
       Alert.alert(t('saved.switchTitle'), t('saved.switchText'), [
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('saved.open'), onPress: go },
