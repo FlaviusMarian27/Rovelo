@@ -159,6 +159,7 @@ const de: Translations = {
     tryAgain: 'Bitte versuche es erneut.',
     addPlaces: 'Orte von der Karte hinzufügen',
     customTitle: 'Meine Route',
+    rename: 'Name der Route',
     generatedTitle: 'Ein Spaziergang durch {{city}}',
     pace: 'Gemütliches Tempo',
     generateFailed: 'Spaziergang konnte nicht geplant werden',

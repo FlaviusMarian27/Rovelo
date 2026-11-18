@@ -9,12 +9,13 @@ import {
   Footprints,
   GripVertical,
   Navigation,
+  Pencil,
   Plus,
   RotateCcw,
   Trash2,
 } from 'lucide-react-native';
 import { Fragment, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import ReorderableList, { reorderItems, useReorderableDrag } from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -128,12 +129,34 @@ export default function RouteScreen() {
   );
 }
 
-function RouteSummary({ route: r }: { route: Route }) {
+// În Edit, numele se poate schimba: se salvează la Enter, când ieși din câmp sau la Gata.
+type NameEdit = { value: string; onChange: (v: string) => void; onCommit: () => void };
+
+function RouteSummary({ route: r, name }: { route: Route; name?: NameEdit }) {
+  const { colors, scheme } = useTheme();
   const styles = useStyles();
   const { t } = useTranslation();
   return (
     <>
-      <Text style={styles.title}>{r.title}</Text>
+      {name ? (
+        <View style={styles.titleEdit}>
+          <TextInput
+            value={name.value}
+            onChangeText={name.onChange}
+            onBlur={name.onCommit}
+            onSubmitEditing={name.onCommit}
+            maxLength={60}
+            returnKeyType="done"
+            selectTextOnFocus
+            keyboardAppearance={scheme}
+            accessibilityLabel={t('route.rename')}
+            style={[styles.title, styles.titleInput]}
+          />
+          <Pencil size={18} color={colors.textSecondary} strokeWidth={1.75} />
+        </View>
+      ) : (
+        <Text style={styles.title}>{r.title}</Text>
+      )}
       <Text style={styles.meta}>
         {formatMinutes(r.totalMinutes)} · {r.distanceKm} km ·{' '}
         {t('common.stops', { count: r.stops.length })} · {r.pace}
@@ -156,7 +179,9 @@ function EditStops({
   const { colors } = useTheme();
   const styles = useStyles();
   const { t } = useTranslation();
-  const { setStops, resetToSuggested } = useRoute();
+  const { setStops, resetToSuggested, renameRoute } = useRoute();
+  const [name, setName] = useState(r.title);
+  const commitName = () => (name.trim() ? renameRoute(name) : setName(r.title));
   const changed = !!suggested && suggested.id !== r.id;
   const diff = suggested ? r.totalMinutes - suggested.totalMinutes : 0;
   const diffText =
@@ -180,7 +205,10 @@ function EditStops({
         )}
         ListHeaderComponent={
           <View style={styles.editHeader}>
-            <RouteSummary route={r} />
+            <RouteSummary
+              route={r}
+              name={{ value: name, onChange: setName, onCommit: commitName }}
+            />
             <Text style={styles.hint}>{t('route.hint')}</Text>
           </View>
         }
@@ -218,7 +246,14 @@ function EditStops({
           <Plus size={18} color={colors.primary} strokeWidth={2} />
           <Text style={styles.addPlacesText}>{t('route.addPlaces')}</Text>
         </Pressable>
-        <Button title={t('common.done')} onPress={onDone} />
+        <Button
+          title={t('common.done')}
+          onPress={() => {
+            commitName(); // dacă încă scriai în câmpul cu numele
+            Keyboard.dismiss();
+            onDone();
+          }}
+        />
       </View>
     </>
   );
@@ -339,6 +374,14 @@ const useStyles = makeStyles((colors) => ({
   map: { height: 250 },
   content: { padding: spacing.lg, paddingBottom: spacing.md },
   title: { fontFamily: fonts.semibold, fontSize: fontSize.xl - 4, color: colors.text },
+  titleEdit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  titleInput: { flex: 1, paddingVertical: spacing.xs },
   meta: {
     marginTop: spacing.xs,
     fontFamily: fonts.regular,

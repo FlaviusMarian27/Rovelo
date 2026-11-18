@@ -159,6 +159,7 @@ const fr: Translations = {
     tryAgain: 'Réessaie, s’il te plaît.',
     addPlaces: 'Ajouter des lieux depuis la carte',
     customTitle: 'Mon parcours',
+    rename: 'Nom du parcours',
     generatedTitle: 'Une balade à {{city}}',
     pace: 'Rythme tranquille',
     generateFailed: 'Impossible de planifier la balade',

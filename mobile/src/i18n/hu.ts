@@ -160,6 +160,7 @@ const hu: Translations = {
     tryAgain: 'Próbáld újra.',
     addPlaces: 'Helyek hozzáadása a térképről',
     customTitle: 'Saját útvonal',
+    rename: 'Útvonal neve',
     generatedTitle: 'Séta: {{city}}',
     pace: 'Kényelmes tempó',
     generateFailed: 'Nem sikerült megtervezni a sétát',

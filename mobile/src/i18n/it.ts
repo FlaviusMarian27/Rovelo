@@ -159,6 +159,7 @@ const it: Translations = {
     tryAgain: 'Riprova.',
     addPlaces: 'Aggiungi luoghi dalla mappa',
     customTitle: 'Il mio percorso',
+    rename: 'Nome del percorso',
     generatedTitle: 'Una passeggiata a {{city}}',
     pace: 'Ritmo tranquillo',
     generateFailed: 'Impossibile pianificare la passeggiata',

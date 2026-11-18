@@ -9,5 +9,8 @@ export const listSavedRoutes = (token: string) => api<SavedRouteEntry[]>('/api/r
 export const saveRoute = (token: string, route: Route) =>
   api<SavedRouteEntry>('/api/routes', { method: 'POST', token, body: route });
 
+export const updateSavedRoute = (token: string, id: string, route: Route) =>
+  api<SavedRouteEntry>(`/api/routes/${id}`, { method: 'PUT', token, body: route });
+
 export const deleteSavedRoute = (token: string, id: string) =>
   api<void>(`/api/routes/${id}`, { method: 'DELETE', token });

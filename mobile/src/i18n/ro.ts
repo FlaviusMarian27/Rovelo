@@ -164,6 +164,7 @@ const ro: RoTranslations = {
     tryAgain: 'Te rugăm să încerci din nou.',
     addPlaces: 'Adaugă locuri de pe hartă',
     customTitle: 'Traseul meu',
+    rename: 'Numele traseului',
     generatedTitle: 'O plimbare prin {{city}}',
     pace: 'Ritm lejer',
     generateFailed: 'Nu s-a putut planifica plimbarea',

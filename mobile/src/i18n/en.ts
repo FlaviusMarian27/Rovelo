@@ -151,6 +151,7 @@ const en = {
     tryAgain: 'Please try again.',
     addPlaces: 'Add places from the map',
     customTitle: 'My route',
+    rename: 'Route name',
     generatedTitle: 'A walk through {{city}}',
     pace: 'Easy pace',
     generateFailed: "Couldn't plan the walk",

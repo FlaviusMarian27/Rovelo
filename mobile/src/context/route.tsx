@@ -24,7 +24,12 @@ import {
 } from '@/services/places-api';
 import { planRoute, toStop } from '@/services/planner-api';
 import { fetchWalk } from '@/services/walk-api';
-import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
+import {
+  deleteSavedRoute,
+  listSavedRoutes,
+  saveRoute,
+  updateSavedRoute,
+} from '@/services/routes-api';
 import type { Coord, Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute, withStreets } from '@/utils/geo';
 import i18n from '@/i18n';
@@ -94,6 +99,8 @@ type RouteState = {
   /** Noua ordine / listă de opriri, aleasă de tine. Ruta se recalculează. */
   setStops: (stops: Stop[]) => void;
   resetToSuggested: () => void;
+  /** Numele rutei active (și al copiei salvate, dacă e salvată). */
+  renameRoute: (title: string) => void;
 
   savedRoutes: Route[];
   /** true cât se încarcă lista de pe server. */
@@ -267,6 +274,19 @@ export function RouteProvider({ children }: PropsWithChildren) {
     if (suggestedRoute) replaceRoute(suggestedRoute);
   }
 
+  function renameRoute(title: string) {
+    const name = title.trim().slice(0, 60);
+    if (!activeRoute || !name || name === activeRoute.title) return;
+    const renamed = { ...activeRoute, title: name };
+    // id-ul rămâne același → progresul și drumul pe străzi rămân
+    setActiveRoute(renamed);
+    setSuggestedRoute((cur) => (cur?.id === renamed.id ? { ...cur, title: name } : cur));
+    if (!savedRoutes.some((r) => r.id === renamed.id)) return;
+    setSavedRoutes((cur) => cur.map((r) => (r.id === renamed.id ? renamed : r)));
+    const serverId = serverIds.current[renamed.id];
+    if (online && serverId) updateSavedRoute(token!, serverId, renamed).catch(() => {});
+  }
+
   function replaceRoute(route: Route) {
     setActiveRoute(route);
     setWalk((w) => (w ? { ...w, routeId: route.id } : w));
@@ -328,6 +348,7 @@ export function RouteProvider({ children }: PropsWithChildren) {
         suggestedRoute,
         setStops,
         resetToSuggested,
+        renameRoute,
         savedRoutes,
         savedLoading,
         reloadSaved,

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,6 +28,7 @@ import ro.rovelo.backend.user.UserRepository;
  * Rutele salvate ale utilizatorului logat.
  *   GET    /api/routes        → lista, cele mai noi primele
  *   POST   /api/routes        → body = ruta (JSON-ul din aplicație) → { id, savedAt, route }
+ *   PUT    /api/routes/{id}   → înlocuiește ruta salvată (ex. după ce i-ai schimbat numele)
  *   DELETE /api/routes/{id}   → șterge (doar dacă e a ta)
  */
 @RestController
@@ -76,6 +78,20 @@ public class SavedRouteController {
         }
         var user = users.getReferenceById(uid);
         return SavedRouteResponse.from(routes.save(new SavedRoute(user, json)));
+    }
+
+    @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional
+    public SavedRouteResponse update(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @RequestBody String routeJson) {
+        String json = routeJson == null ? "" : routeJson.trim();
+        if (!json.startsWith("{") || !json.endsWith("}") || json.length() > MAX_ROUTE_CHARS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The route must be a JSON object.");
+        }
+        SavedRoute route = routes.findByIdAndUserId(id, userId(jwt))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Route not found."));
+        route.setRouteJson(json);
+        return SavedRouteResponse.from(route); // salvat automat la finalul tranzacției
     }
 
     @DeleteMapping("/{id}")

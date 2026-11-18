@@ -64,6 +64,10 @@ public class SavedRoute {
         return routeJson;
     }
 
+    public void setRouteJson(String routeJson) {
+        this.routeJson = routeJson;
+    }
+
     public Instant getSavedAt() {
         return savedAt;
     }
