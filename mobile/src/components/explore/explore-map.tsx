@@ -1,5 +1,9 @@
 // Harta din Explore: toate locurile din zonă ca puncte; cele din ruta ta, numerotate.
 // Când oprești harta din mișcare, spune ce zonă se vede (ca Explore să încarce locurile de acolo).
+//
+// Performanță: punctele sunt imagini PNG (prop-ul `image`), nu View-uri React. Pe Android, harta
+// Google transformă fiecare View într-o imagine, iar cu sute de puncte asta o încetinea.
+// Locul selectat e un singur marker separat, deasupra, ca restul să nu se redeseneze.
 import { useImperativeHandle, useRef, type Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
@@ -24,6 +28,16 @@ type Props = {
 // Cât de mare e zona vizibilă: jumătate din înălțime, în metri
 const radiusOf = (r: Region) => (r.latitudeDelta * 111_320) / 2;
 
+// Aceleași culori ca `primary` din tema light / dark (assets/images/markers, generate o dată)
+const DOT = {
+  light: require('@/assets/images/markers/dot-light.png'),
+  dark: require('@/assets/images/markers/dot-dark.png'),
+};
+const DOT_SELECTED = {
+  light: require('@/assets/images/markers/dot-selected-light.png'),
+  dark: require('@/assets/images/markers/dot-selected-dark.png'),
+};
+
 export function ExploreMap({
   ref,
   center,
@@ -37,6 +51,8 @@ export function ExploreMap({
   const styles = useStyles();
   const map = useRef<MapView>(null);
   const inRoute = new Set(routeStops.map((s) => s.id));
+  const selected =
+    selectedId && !inRoute.has(selectedId) ? places.find((p) => p.id === selectedId) : null;
 
   useImperativeHandle(ref, () => ({
     focus: (c, zoom = 17) => map.current?.animateCamera({ center: c, zoom }, { duration: 400 }),
@@ -67,21 +83,29 @@ export function ExploreMap({
       pitchEnabled={false}>
       {places
         .filter((p) => !inRoute.has(p.id))
-        .map((p) => {
-          const selected = p.id === selectedId;
-          return (
-            <Marker
-              key={`${p.id}:${selected}`}
-              coordinate={p.coord}
-              anchor={{ x: 0.5, y: 0.5 }}
-              onPress={() => onSelect(p.id)}
-              stopPropagation
-              tracksViewChanges={false}
-              zIndex={selected ? 3 : 1}>
-              <View style={[styles.dot, selected && styles.dotSelected]} />
-            </Marker>
-          );
-        })}
+        .map((p) => (
+          <Marker
+            key={`${scheme}:${p.id}`}
+            coordinate={p.coord}
+            anchor={{ x: 0.5, y: 0.5 }}
+            image={DOT[scheme]}
+            onPress={() => onSelect(p.id)}
+            stopPropagation
+            tracksViewChanges={false}
+            zIndex={1}
+          />
+        ))}
+      {selected && (
+        <Marker
+          key={`selected:${scheme}:${selected.id}`}
+          coordinate={selected.coord}
+          anchor={{ x: 0.5, y: 0.5 }}
+          image={DOT_SELECTED[scheme]}
+          stopPropagation
+          tracksViewChanges={false}
+          zIndex={3}
+        />
+      )}
       {routeStops.map((s, i) => (
         <Marker
           key={`route:${s.id}:${s.id === selectedId}`}
@@ -101,15 +125,6 @@ export function ExploreMap({
 }
 
 const useStyles = makeStyles((colors) => ({
-  dot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.primary,
-    borderWidth: 2,
-    borderColor: colors.onPrimary,
-  },
-  dotSelected: { width: 22, height: 22, borderRadius: 11, borderWidth: 3 },
   pin: {
     width: 26,
     height: 26,

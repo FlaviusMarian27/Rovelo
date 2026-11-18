@@ -58,14 +58,33 @@ export default function ExploreScreen() {
   const routeStops = activeRoute?.stops ?? [];
   const kinds = group ? PLACE_GROUPS.find((g) => g.id === group)!.kinds : [];
 
-  async function load(c: Coord, r: number, k: string[]) {
+  // Ultima zonă încărcată: dacă harta s-a mișcat doar puțin, nu mai întrebăm serverul
+  const lastLoad = useRef<{ center: Coord; radius: number; kinds: string } | null>(null);
+
+  async function load(c: Coord, r: number, k: string[], force = false) {
+    const prev = lastLoad.current;
+    if (
+      !force &&
+      prev &&
+      prev.kinds === k.join(',') &&
+      distanceMeters(prev.center, c) < prev.radius * 0.3 &&
+      r > prev.radius * 0.7 &&
+      r < prev.radius * 1.4
+    ) {
+      return;
+    }
     const id = ++request.current;
     setLoading(true);
     try {
       const found = await exploreNearby(c, r, k);
       if (id !== request.current) return; // a venit deja un răspuns mai nou
+      lastLoad.current = { center: c, radius: r, kinds: k.join(',') };
       rememberPlaces(found);
-      setPlaces(found);
+      // Păstrăm aceleași obiecte pentru locurile care erau deja pe hartă (markerele lor nu se refac)
+      setPlaces((cur) => {
+        const old = new Map(cur.map((p) => [p.id, p]));
+        return found.map((p) => old.get(p.id) ?? p);
+      });
     } catch {
       // fără rețea: rămân locurile de dinainte
     } finally {
@@ -83,7 +102,7 @@ export default function ExploreScreen() {
 
   // Alt filtru → reîncărcăm zona curentă
   useEffect(() => {
-    load(area.current.center, area.current.radius, kinds);
+    load(area.current.center, area.current.radius, kinds, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group]);
 

@@ -21,6 +21,7 @@ import ro.rovelo.backend.planner.PlannerDtos.PlannedStop;
  *   GET /api/explore?lat=45.75&lon=21.22&radius=1500             → cele mai interesante din zonă
  *   GET /api/explore?lat=…&lon=…&kinds=cafe,restaurant           → doar anumite tipuri
  *   GET /api/explore?lat=…&lon=…&q=catedrala                     → căutare după nume (fără diacritice)
+ *   &limit=120 → câte locuri, maxim (aplicația cere mai puține când harta e micșorată)
  */
 @RestController
 public class ExploreController {
@@ -41,7 +42,8 @@ public class ExploreController {
             @RequestParam double lon,
             @RequestParam(defaultValue = "1500") int radius,
             @RequestParam(required = false) String kinds,
-            @RequestParam(required = false) String q) {
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "300") int limit) {
         if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid coordinates.");
         }
@@ -67,7 +69,7 @@ public class ExploreController {
         // Pe hartă încap doar câteva sute de pini: păstrăm cele mai interesante
         return found.stream()
                 .sorted(Comparator.comparingDouble(Place::getBaseScore).reversed())
-                .limit(MAX_RESULTS)
+                .limit(Math.max(20, Math.min(limit, MAX_RESULTS)))
                 .map(ExploreController::toDto)
                 .toList();
     }
