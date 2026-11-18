@@ -27,8 +27,9 @@ import { useTranslation } from 'react-i18next';
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
 import { Button } from '@/components/ui/button';
 import { Menu, type MenuItem } from '@/components/ui/menu';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute, type WalkState } from '@/context/route';
+import { makeStyles, useTheme } from '@/context/theme';
 import { useGpsPosition, useSimulatedPosition } from '@/hooks/use-position';
 import { useWalkProgress } from '@/hooks/use-walk-progress';
 import { replanRoute, type ReplanResult } from '@/services/agent';
@@ -39,6 +40,7 @@ import { roughMinutes, shouldShowLate } from '@/utils/schedule';
 const FAR_FROM_ROUTE_M = 3000; // mai departe de atât → îți propunem modul demo
 
 export default function NavigationScreen() {
+  const styles = useStyles();
   const { activeRoute, walk, beginWalk } = useRoute();
 
   // Pornește mersul (sau îl continuă dacă ai mai fost pe ecran cu aceeași rută).
@@ -54,6 +56,8 @@ export default function NavigationScreen() {
 }
 
 function Navigation({ route, walkState }: { route: Route; walkState: WalkState }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { setDemo, addDelay, snoozeLate, endWalk, replaceRoute } = useRoute();
   const demo = walkState.demo;
@@ -269,6 +273,8 @@ function NextStopCard({
   hasPosition: boolean;
   demo: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const arrived = walk.phase === 'arrived';
   const after = route.stops[walk.index + 1];
@@ -322,6 +328,8 @@ function BottomCard({
   onDismiss?: () => void;
   children?: ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   return (
     <View style={[styles.card, styles.bottomCard]}>
@@ -349,6 +357,8 @@ function RoundButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
@@ -369,7 +379,7 @@ const shadow = {
   elevation: 4,
 } as const;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.surface },
   overlay: { ...StyleSheet.absoluteFill, paddingHorizontal: spacing.md },
   topBar: {
@@ -443,4 +453,4 @@ const styles = StyleSheet.create({
   bottomCard: { marginTop: 0 },
   row: { flexDirection: 'row', gap: spacing.sm + 2 },
   flex: { flex: 1 },
-});
+}));

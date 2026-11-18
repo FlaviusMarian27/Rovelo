@@ -1,6 +1,8 @@
 // Singura sursă de culori, spațieri și fonturi. Nu hardcoda culori în ecrane.
 
-export const colors = {
+// Fiecare ecran își ia culorile din useTheme() / makeStyles (context/theme.tsx),
+// așa că tema se schimbă peste tot deodată. Ambele palete au aceleași chei.
+export const lightColors = {
   primary: '#BF1C21', // roșul din iconiță (docs/icon.png)
   primaryPressed: '#A3171B',
   primarySoft: '#FBEBEC', // fundal deschis pentru iconițe/badge-uri roșii
@@ -16,11 +18,39 @@ export const colors = {
   textMuted: '#A1A1AA',
 
   error: '#BF1C21',
+  backdrop: 'rgba(0, 0, 0, 0.35)', // în spatele panourilor (bottom sheet, meniu)
+  shadow: '#000000',
 
   // Punctul albastru "tu ești aici" de pe hartă (convenția din toate aplicațiile de hărți)
   userLocation: '#2F6FED',
   userLocationHalo: 'rgba(47, 111, 237, 0.18)',
-} as const;
+};
+
+export type Colors = typeof lightColors;
+
+// Tema întunecată: gri aproape negru, nu negru pur; roșul puțin mai deschis ca să se vadă pe întuneric.
+export const darkColors: Colors = {
+  primary: '#E5484D',
+  primaryPressed: '#C8373C',
+  primarySoft: '#3A1E20',
+  onPrimary: '#FFFFFF',
+
+  background: '#111113',
+  surface: '#1C1C1F',
+  border: '#2E2E33',
+  borderFocus: '#5B5B63',
+
+  text: '#F4F4F5',
+  textSecondary: '#A1A1AA',
+  textMuted: '#71717A',
+
+  error: '#F2555A',
+  backdrop: 'rgba(0, 0, 0, 0.6)',
+  shadow: '#000000',
+
+  userLocation: '#4F8BFF',
+  userLocationHalo: 'rgba(79, 139, 255, 0.25)',
+};
 
 export const spacing = {
   xs: 4,

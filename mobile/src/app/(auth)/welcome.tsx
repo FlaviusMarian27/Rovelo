@@ -1,15 +1,17 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { makeStyles } from '@/context/theme';
 import { touchPoint, useTransition } from '@/context/transition';
 
 export default function WelcomeScreen() {
+  const styles = useStyles();
   const { t } = useTranslation();
   const { continueAsGuest } = useSession();
   const { enter } = useTransition();
@@ -44,7 +46,7 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
@@ -75,4 +77,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   actions: { gap: spacing.md - 4 },
-});
+}));

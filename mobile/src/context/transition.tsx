@@ -23,8 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
-
-import { colors } from '@/constants/theme';
+import { makeStyles } from '@/context/theme';
 
 export type Point = { x: number; y: number };
 
@@ -50,6 +49,7 @@ const PIN_IN = 320;
 const PIN_OUT = 160;
 
 export function TransitionProvider({ children }: PropsWithChildren) {
+  const styles = useStyles();
   const { width: W, height: H } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
@@ -183,9 +183,9 @@ export function useTransition() {
   return ctx;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   circle: { position: 'absolute', left: 0, top: 0, backgroundColor: colors.primary },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   pin: { width: PIN_SIZE, height: PIN_SIZE },
   white: { backgroundColor: colors.background },
-});
+}));

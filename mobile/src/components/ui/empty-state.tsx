@@ -1,8 +1,9 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 
 type Props = {
   icon: LucideIcon;
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export function EmptyState({ icon: Icon, title, text, action }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.wrap}>
       <View style={styles.badge}>
@@ -28,7 +31,7 @@ export function EmptyState({ icon: Icon, title, text, action }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   badge: {
     width: 64,
@@ -49,4 +52,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   action: { alignSelf: 'stretch', marginTop: spacing.lg },
-});
+}));

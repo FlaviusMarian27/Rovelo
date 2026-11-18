@@ -3,30 +3,42 @@ import {
   ChevronRight,
   Languages,
   LogOut,
+  Moon,
   Pencil,
   SlidersHorizontal,
   Trash2,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { LanguageSheet } from '@/components/language-sheet';
+import { OptionSheet } from '@/components/option-sheet';
 import { Button } from '@/components/ui/button';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { makeStyles, useTheme } from '@/context/theme';
 import { useTransition } from '@/context/transition';
-import { LANGUAGES } from '@/i18n';
+import { LANGUAGES, setLanguage, type LanguageCode } from '@/i18n';
+import type { ThemePreference } from '@/types';
 import { fullName, initials } from '@/utils/user';
 
+const THEMES: ThemePreference[] = ['system', 'light', 'dark'];
+
 export default function ProfileScreen() {
+  const styles = useStyles();
   const { t, i18n } = useTranslation();
   const { user, signOut: endSession, deleteAccount } = useSession();
+  const { preference, setPreference } = useTheme();
   const { exit } = useTransition();
-  const [languageOpen, setLanguageOpen] = useState(false);
+  const [sheet, setSheet] = useState<'language' | 'theme' | null>(null);
   if (!user) return null;
+
+  const chooseTheme = async (p: ThemePreference) => {
+    const ok = await setPreference(p);
+    if (!ok) Alert.alert(t('profile.themeFailed'), t('route.tryAgain'));
+  };
 
   const signOut = () => exit(endSession);
   const confirmDelete = () =>
@@ -65,7 +77,13 @@ export default function ProfileScreen() {
             icon={Languages}
             label={t('profile.language')}
             value={currentLanguage}
-            onPress={() => setLanguageOpen(true)}
+            onPress={() => setSheet('language')}
+          />
+          <Row
+            icon={Moon}
+            label={t('profile.theme')}
+            value={t(`profile.theme_${preference}`)}
+            onPress={() => setSheet('theme')}
             last
           />
         </View>
@@ -93,7 +111,28 @@ export default function ProfileScreen() {
         )}
       </ScrollView>
 
-      <LanguageSheet visible={languageOpen} onClose={() => setLanguageOpen(false)} />
+      <OptionSheet
+        visible={sheet === 'language'}
+        onClose={() => setSheet(null)}
+        title={t('profile.language')}
+        icon={Languages}
+        options={LANGUAGES.map((l) => ({
+          value: l.code,
+          label: l.label,
+          tag: l.code.toUpperCase(),
+        }))}
+        selected={i18n.language as LanguageCode}
+        onSelect={setLanguage}
+      />
+      <OptionSheet
+        visible={sheet === 'theme'}
+        onClose={() => setSheet(null)}
+        title={t('profile.theme')}
+        icon={Moon}
+        options={THEMES.map((p) => ({ value: p, label: t(`profile.theme_${p}`) }))}
+        selected={preference}
+        onSelect={chooseTheme}
+      />
     </SafeAreaView>
   );
 }
@@ -108,6 +147,8 @@ type RowProps = {
 };
 
 function Row({ icon: Icon, label, value, onPress, danger, last }: RowProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const color = danger ? colors.error : colors.text;
   return (
     <Pressable
@@ -126,7 +167,7 @@ function Row({ icon: Icon, label, value, onPress, danger, last }: RowProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   languageList: { marginBottom: spacing.md },
   rowValue: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.textSecondary },
   safe: { flex: 1, backgroundColor: colors.background },
@@ -190,4 +231,4 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: colors.textSecondary,
   },
-});
+}));

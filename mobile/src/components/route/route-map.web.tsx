@@ -1,10 +1,10 @@
 // react-native-maps nu merge pe web. Variantă simplă (doar ca bundle-ul web să nu crape):
 // desenează linia, pinii și poziția proiectate pe un dreptunghi.
 import { useImperativeHandle, type Ref } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { colors } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 import type { Coord, Route } from '@/types';
 
 export type RouteMapHandle = {
@@ -23,6 +23,8 @@ type Props = {
 };
 
 export function RouteMap({ route, ref, userPosition, currentIndex, edgePadding }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   useImperativeHandle(ref, () => ({ focusStop: () => {}, centerOn: () => {}, fitRoute: () => {} }));
 
   const W = 400;
@@ -106,6 +108,6 @@ export function RouteMap({ route, ref, userPosition, currentIndex, edgePadding }
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { flex: 1, backgroundColor: colors.surface },
-});
+}));

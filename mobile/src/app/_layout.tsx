@@ -13,10 +13,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import '@/i18n'; // traducerile, înainte de orice ecran
 import { AnimatedSplash } from '@/components/animated-splash';
-import { colors } from '@/constants/theme';
+import { lightColors } from '@/constants/theme';
 import { CityProvider } from '@/context/city';
 import { RouteProvider } from '@/context/route';
 import { SessionProvider, useSession } from '@/context/session';
+import { ThemeProvider, useTheme } from '@/context/theme';
 import { TransitionProvider } from '@/context/transition';
 
 // Splash-ul nativ rămâne până îl ascunde AnimatedSplash (după ce s-au încărcat fonturile).
@@ -36,25 +37,35 @@ export default function RootLayout() {
     // Necesar pentru gesturi (ex. tragerea opririlor pe Your route)
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SessionProvider>
-        <StatusBar style={splashDone ? 'dark' : 'light'} />
-        <CityProvider>
-          <TransitionProvider>
-            <RootStack />
-          </TransitionProvider>
-        </CityProvider>
-        {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
+        {/* Tema depinde de cont (salvată pe server), deci stă în interiorul sesiunii */}
+        <ThemeProvider>
+          <ThemedStatusBar overSplash={!splashDone} />
+          <CityProvider>
+            <TransitionProvider>
+              <RootStack />
+            </TransitionProvider>
+          </CityProvider>
+          {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
+        </ThemeProvider>
       </SessionProvider>
     </GestureHandlerRootView>
   );
 }
 
+// Text alb peste splash-ul roșu, apoi după temă: închis pe light, deschis pe dark.
+function ThemedStatusBar({ overSplash }: { overSplash: boolean }) {
+  const { scheme } = useTheme();
+  return <StatusBar style={overSplash || scheme === 'dark' ? 'light' : 'dark'} />;
+}
+
 // Stack.Protected: ecranele de auth există doar când nu ești logat, taburile doar când ești.
 // Când se schimbă user-ul, expo-router te mută singur pe ecranul potrivit.
 function RootStack() {
+  const { colors } = useTheme();
   const { user, ready } = useSession();
 
   // Cât verificăm token-ul salvat: rămâne roșul splash-ului, ca să nu clipească Welcome.
-  if (!ready) return <View style={{ flex: 1, backgroundColor: colors.primary }} />;
+  if (!ready) return <View style={{ flex: 1, backgroundColor: lightColors.primary }} />;
 
   // key = user → la Log out / alt cont, traseul activ se resetează.
   return (

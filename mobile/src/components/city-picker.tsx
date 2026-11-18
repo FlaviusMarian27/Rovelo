@@ -7,7 +7,6 @@ import {
   FlatList,
   Modal,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -15,11 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useCity } from '@/context/city';
+import { makeStyles, useTheme } from '@/context/theme';
 import { cities, normalize } from '@/data/cities';
 
 export function CityPicker({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { colors, scheme } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { city, setCity, detectCity, detecting } = useCity();
   const [query, setQuery] = useState('');
@@ -62,6 +64,7 @@ export function CityPicker({ visible, onClose }: { visible: boolean; onClose: ()
         <View style={styles.search}>
           <Search size={18} color={colors.textMuted} />
           <TextInput
+            keyboardAppearance={scheme} // iOS: tastatură închisă pe tema dark
             value={query}
             onChangeText={setQuery}
             placeholder={t('city.search')}
@@ -113,7 +116,7 @@ export function CityPicker({ visible, onClose }: { visible: boolean; onClose: ()
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
@@ -163,4 +166,4 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
-});
+}));

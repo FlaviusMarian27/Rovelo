@@ -10,7 +10,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -20,12 +19,15 @@ import { useTranslation } from 'react-i18next';
 import { RouteThumb } from '@/components/route/route-thumb';
 import { Chip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
+import { makeStyles, useTheme } from '@/context/theme';
 import type { Route } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function SavedScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { savedPlaces, savedRoutes, savedLoading, reloadSaved, openRoute, activeRoute, walk } =
     useRoute();
@@ -157,6 +159,8 @@ function Card({
   meta: string;
   tags?: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
@@ -179,7 +183,7 @@ function Card({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.background, paddingTop: spacing.md },
   title: {
     paddingHorizontal: spacing.lg,
@@ -246,4 +250,4 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textMuted,
   },
-});
+}));

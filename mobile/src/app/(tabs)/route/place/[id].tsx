@@ -21,11 +21,14 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
+import { makeStyles, useTheme } from '@/context/theme';
 import { findPlace, placeStories } from '@/data/mock';
 
 export default function PlaceScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { id, photo } = useLocalSearchParams<{ id: string; photo?: string }>();
   const { activeRoute, addStop, isPlaceSaved, toggleSavedPlace } = useRoute();
@@ -128,6 +131,8 @@ function HeroButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
@@ -140,7 +145,7 @@ function HeroButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.background },
   hero: { height: 330, backgroundColor: colors.surface },
   heroPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -209,4 +214,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   addButton: { flex: 1 },
-});
+}));

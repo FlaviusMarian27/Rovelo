@@ -1,15 +1,41 @@
-// Alegerea limbii: panou care urcă de jos, în stilul aplicației (în loc de Alert-ul sistemului).
-// Limba curentă e bifată; o limbă nouă apare aici automat din LANGUAGES.
-import { Check, Languages } from 'lucide-react-native';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+// Panou care urcă de jos cu o listă de opțiuni (în loc de Alert-ul sistemului).
+// Folosit pentru limbă și temă; opțiunea curentă e bifată.
+import { Check, type LucideIcon } from 'lucide-react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
-import { LANGUAGES, setLanguage } from '@/i18n';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 
-export function LanguageSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const { t, i18n } = useTranslation();
+export type SheetOption<V extends string> = {
+  value: V;
+  label: string;
+  tag?: string; // text mic în stânga, ex. codul limbii
+};
+
+type Props<V extends string> = {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  icon: LucideIcon;
+  options: readonly SheetOption<V>[];
+  selected: V;
+  onSelect: (value: V) => void;
+};
+
+export function OptionSheet<V extends string>({
+  visible,
+  onClose,
+  title,
+  icon: Icon,
+  options,
+  selected: current,
+  onSelect,
+}: Props<V>) {
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -20,31 +46,31 @@ export function LanguageSheet({ visible, onClose }: { visible: boolean; onClose:
           <View style={styles.handle} />
           <View style={styles.header}>
             <View style={styles.icon}>
-              <Languages size={20} color={colors.primary} strokeWidth={1.75} />
+              <Icon size={20} color={colors.primary} strokeWidth={1.75} />
             </View>
-            <Text style={styles.title}>{t('profile.language')}</Text>
+            <Text style={styles.title}>{title}</Text>
           </View>
 
           <View style={styles.list}>
-            {LANGUAGES.map((l, i) => {
-              const selected = i18n.language === l.code;
+            {options.map((o, i) => {
+              const selected = o.value === current;
               return (
                 <Pressable
-                  key={l.code}
+                  key={o.value}
                   onPress={() => {
-                    setLanguage(l.code);
+                    onSelect(o.value);
                     onClose();
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   style={({ pressed }) => [
                     styles.row,
-                    i < LANGUAGES.length - 1 && styles.rowBorder,
+                    i < options.length - 1 && styles.rowBorder,
                     selected && styles.rowSelected,
                     pressed && !selected && styles.rowPressed,
                   ]}>
-                  <Text style={styles.code}>{l.code.toUpperCase()}</Text>
-                  <Text style={[styles.label, selected && styles.labelSelected]}>{l.label}</Text>
+                  {!!o.tag && <Text style={styles.code}>{o.tag}</Text>}
+                  <Text style={[styles.label, selected && styles.labelSelected]}>{o.label}</Text>
                   {selected && <Check size={20} color={colors.primary} strokeWidth={2} />}
                 </Pressable>
               );
@@ -63,8 +89,8 @@ export function LanguageSheet({ visible, onClose }: { visible: boolean; onClose:
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)' },
+const useStyles = makeStyles((colors) => ({
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: colors.backdrop },
   sheet: {
     backgroundColor: colors.background,
     borderTopLeftRadius: radius.xl,
@@ -122,4 +148,4 @@ const styles = StyleSheet.create({
   labelSelected: { color: colors.primary },
   cancel: { alignItems: 'center', justifyContent: 'center', height: 52, marginTop: spacing.sm },
   cancelText: { fontFamily: fonts.semibold, fontSize: fontSize.md, color: colors.textSecondary },
-});
+}));

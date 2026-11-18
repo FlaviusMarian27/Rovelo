@@ -8,8 +8,9 @@ import { useImperativeHandle, useRef, type Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
-import { mapStyleLight } from '@/constants/map-style';
-import { colors, fonts } from '@/constants/theme';
+import { mapStyleDark, mapStyleLight } from '@/constants/map-style';
+import { fonts } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 import type { Coord, Route } from '@/types';
 
 export type RouteMapHandle = {
@@ -38,6 +39,8 @@ export function RouteMap({
   edgePadding = DEFAULT_PADDING,
   onUserPan,
 }: Props) {
+  const { colors, scheme } = useTheme();
+  const styles = useStyles();
   const map = useRef<MapView>(null);
   const coords = route.stops.map((s) => s.coord);
 
@@ -57,9 +60,9 @@ export function RouteMap({
       <MapView
         ref={map}
         style={StyleSheet.absoluteFill}
-        customMapStyle={mapStyleLight} // Android (Google); pe iOS se ignoră
+        customMapStyle={scheme === 'dark' ? mapStyleDark : mapStyleLight} // Android (Google); pe iOS se ignoră
         mapType="mutedStandard" // iOS: hartă mai ștearsă; Android o tratează ca standard
-        userInterfaceStyle="light"
+        userInterfaceStyle={scheme} // iOS: harta urmează tema aplicației
         initialRegion={{ ...coords[0], latitudeDelta: 0.01, longitudeDelta: 0.01 }}
         onMapReady={() => map.current?.fitToCoordinates(coords, { edgePadding, animated: false })}
         onPanDrag={onUserPan}
@@ -107,7 +110,7 @@ export function RouteMap({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { flex: 1, backgroundColor: colors.surface, overflow: 'hidden' },
   pin: {
     width: 28,
@@ -138,4 +141,4 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.onPrimary,
   },
-});
+}));

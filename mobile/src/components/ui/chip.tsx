@@ -1,7 +1,8 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 
 type Props = {
   label: string;
@@ -11,6 +12,8 @@ type Props = {
 };
 
 export function Chip({ label, selected, onPress, icon: Icon }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const fg = selected ? colors.onPrimary : colors.text;
   return (
     <Pressable
@@ -28,7 +31,7 @@ export function Chip({ label, selected, onPress, icon: Icon }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   chip: {
     height: 44,
     flexDirection: 'row',
@@ -43,4 +46,4 @@ const styles = StyleSheet.create({
   selected: { backgroundColor: colors.primary, borderColor: colors.primary },
   pressed: { backgroundColor: colors.surface },
   label: { fontFamily: fonts.medium, fontSize: fontSize.sm + 1 },
-});
+}));

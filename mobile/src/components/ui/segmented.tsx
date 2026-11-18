@@ -1,7 +1,8 @@
 // Butoanele 1h / 2h / 3h+ — exact o opțiune aleasă.
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles } from '@/context/theme';
 
 type Props<T extends string> = {
   options: T[];
@@ -10,6 +11,7 @@ type Props<T extends string> = {
 };
 
 export function Segmented<T extends string>({ options, value, onChange }: Props<T>) {
+  const styles = useStyles();
   return (
     <View style={styles.row} accessibilityRole="radiogroup">
       {options.map((opt) => {
@@ -33,7 +35,7 @@ export function Segmented<T extends string>({ options, value, onChange }: Props<
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: { flexDirection: 'row', gap: spacing.sm + 2 },
   item: {
     flex: 1,
@@ -49,4 +51,4 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: colors.surface },
   label: { fontFamily: fonts.medium, fontSize: fontSize.md + 1, color: colors.text },
   labelSelected: { color: colors.onPrimary },
-});
+}));

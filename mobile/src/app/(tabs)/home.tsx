@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -21,9 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Segmented } from '@/components/ui/segmented';
 import { StartSelect } from '@/components/ui/select';
-import { colors, fonts, fontSize, spacing } from '@/constants/theme';
+import { fonts, fontSize, spacing } from '@/constants/theme';
 import { useCity } from '@/context/city';
 import { useRoute } from '@/context/route';
+import { makeStyles, useTheme } from '@/context/theme';
 import { startPointsFor, TEST_CITY_ID } from '@/data/cities';
 import { durations, interests } from '@/data/mock';
 import type { Duration, Interest, StartPoint } from '@/types';
@@ -37,6 +38,8 @@ const interestIcons: Record<Interest, LucideIcon> = {
 };
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { generateRoute, generating } = useRoute();
   const { city, detecting } = useCity();
@@ -126,7 +129,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
@@ -174,4 +177,4 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
-});
+}));

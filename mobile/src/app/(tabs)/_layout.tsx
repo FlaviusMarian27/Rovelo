@@ -3,13 +3,15 @@ import { Bookmark, House, Route, User, type LucideIcon } from 'lucide-react-nati
 import type { ColorValue } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { colors, fonts } from '@/constants/theme';
+import { fonts } from '@/constants/theme';
+import { useTheme } from '@/context/theme';
 
 const icon =
   (Icon: LucideIcon) =>
   ({ color }: { color: ColorValue }) => <Icon size={24} color={String(color)} strokeWidth={1.75} />;
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   const { t } = useTranslation();
   return (
     <Tabs

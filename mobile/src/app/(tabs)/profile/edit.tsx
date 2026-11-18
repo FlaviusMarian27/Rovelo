@@ -2,20 +2,22 @@
 // Poza de profil vine mai târziu; până atunci avatarul arată inițialele.
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { colors, fonts, fontSize, spacing } from '@/constants/theme';
+import { fonts, fontSize, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { makeStyles } from '@/context/theme';
 import type { ProfileInput } from '@/types';
 import { BIO_MAX, isValidEmail, isValidNickname } from '@/utils/validation';
 
 type Errors = Partial<Record<keyof ProfileInput | 'form', string>>;
 
 export default function EditProfileScreen() {
+  const styles = useStyles();
   const { t } = useTranslation();
   const { user, updateProfile } = useSession();
   const initial: ProfileInput = {
@@ -127,8 +129,8 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: { flexDirection: 'row', gap: spacing.md },
   half: { flex: 1 },
   formError: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.error },
-});
+}));

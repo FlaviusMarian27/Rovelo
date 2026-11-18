@@ -1,11 +1,12 @@
 // Schelet comun pentru Log in și Create account:
 // back, titlu, subtitlu, câmpuri, iar jos linkul spre celălalt ecran.
 import type { PropsWithChildren, ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BackButton } from '@/components/ui/back-button';
-import { colors, fonts, fontSize, spacing } from '@/constants/theme';
+import { fonts, fontSize, spacing } from '@/constants/theme';
+import { makeStyles } from '@/context/theme';
 
 type Props = PropsWithChildren<{
   title: string;
@@ -14,6 +15,7 @@ type Props = PropsWithChildren<{
 }>;
 
 export function AuthForm({ title, subtitle, footer, children }: Props) {
+  const styles = useStyles();
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
@@ -36,7 +38,7 @@ export function AuthForm({ title, subtitle, footer, children }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   content: {
@@ -50,4 +52,4 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: fonts.regular, fontSize: fontSize.md, color: colors.textSecondary },
   form: { gap: spacing.lg - 4 },
   footer: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingTop: spacing.xl },
-});
+}));

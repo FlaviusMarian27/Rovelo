@@ -1,12 +1,15 @@
 // Mini-hartă pentru carduri: forma traseului (linie + puncte), fără hartă reală.
 // Ieftină de randat într-o listă și merge pe orice platformă (react-native-svg).
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
-import { colors, radius } from '@/constants/theme';
+import { radius } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 import type { Route } from '@/types';
 
 export function RouteThumb({ route, size = 72 }: { route: Route; size?: number }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const pad = 12;
   const lats = route.path.map((c) => c.latitude);
   const lngs = route.path.map((c) => c.longitude);
@@ -47,6 +50,6 @@ export function RouteThumb({ route, size = 72 }: { route: Route; size?: number }
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { borderRadius: radius.md, backgroundColor: colors.primarySoft, overflow: 'hidden' },
-});
+}));

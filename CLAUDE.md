@@ -15,6 +15,12 @@ codul se scrie cu Claude, eu (Flavius) decid produsul, designul și arhitectura 
 - Pachete Expo: `npx expo install <pachet>` (versiuni compatibile cu SDK-ul), nu `npm install`.
 - Ignoră erorile/avertismentele din varianta web; testez doar pe telefon cu Expo Go.
 - Culori, spațieri, fonturi doar din `mobile/src/constants/theme.ts`, nu hardcodate în ecrane.
+- Tema light/dark: culorile vin din `useTheme()` (`context/theme.tsx`), stilurile cu
+  `const useStyles = makeStyles((colors) => ({...}))` + `const styles = useStyles()` în componentă.
+  Orice culoare nouă intră în AMBELE palete (`lightColors` și `darkColors`).
+- Niciun text de interfață scris direct în ecrane: orice text nou intră în `mobile/src/i18n/en.ts`
+  ȘI în toate celelalte limbi (ro, de, fr, es, it, hu; aceleași chei, `tsc` prinde ce lipsește), folosit cu `t('...')` (`useTranslation`) sau `i18n.t` în afara
+  componentelor. Datele (nume de locuri, povești, titluri de rute) nu se traduc în aplicație.
 
 ## Ideea
 Ghid de plimbare prin orice oraș, condus de un agent AI preantrenat (apelat prin API, nu
@@ -59,15 +65,19 @@ Claude nu poate compila backend-ul (Maven Central blocat în mediul lui): eu rul
 - `context/session.tsx`: auth prin backend; `signIn`/`signUp` doar verifică, `startSession` pornește
   sesiunea (ca animația de intrare să acopere ecranul înainte). Token în `expo-secure-store`,
   verificat la pornire cu `GET /api/me`. Guest = doar local.
-- `services/api.ts`: clientul HTTP (timeout, erori `{error}` de la server); `services/routes-api.ts`.
+- `services/api.ts`: clientul HTTP (timeout, erori `{error}` de la server);
+  `services/routes-api.ts`, `services/places-api.ts`.
 - `context/transition.tsx`: animațiile auth ↔ app.
-- `context/route.tsx`: ruta activă, progresul pe traseu (`walk`), rute salvate (pe server, prin
-  `/api/routes`; Guest local), locuri salvate (încă doar în memorie).
+- `context/route.tsx`: ruta activă, progresul pe traseu (`walk`), rute și locuri salvate
+  (pe server prin `/api/routes` și `/api/places`; Guest doar local).
 - `hooks/use-position.ts` (GPS + demo), `hooks/use-walk-progress.ts` (sosire/plecare, întârziere).
 - `services/agent.ts`: **mock-urile "agentului"** (replan, recognize); generarea rutei e mock în
   `context/route.tsx`. Se înlocuiesc cu apeluri spre backend, fără să schimbi ecranele.
 - `data/mock.ts`: locuri și rute din Timișoara, poveștile locurilor.
 - `utils/geo.ts` (distanțe, `buildRoute`), `utils/schedule.ts` (plan în timp, întârziere).
+- `i18n/`: traduceri (i18next) EN, RO, DE, FR, ES, IT, HU; limba telefonului implicit, schimbare din Profile → Language
+  (salvată cu AsyncStorage). Limbă nouă = fișier nou + intrare în `LANGUAGES`.
+- `context/city.tsx` + `data/cities.ts` + `components/city-picker.tsx`: orașul (GPS sau listă).
 - `types/index.ts`: `Route`, `Stop`, `Leg`, `Coord`, `PlaceStory`… = forma răspunsurilor API.
 
 ## Decizii luate
@@ -94,7 +104,9 @@ Claude nu poate compila backend-ul (Maven Central blocat în mediul lui): eu rul
 - [x] UI complet cu date false: auth + animații, Preferences, Your route + hartă,
   Live navigation (GPS, demo, întârziere, Replan), Scan + Place story, Saved, Profile.
 - [x] Mutarea opririlor prin tragere; carduri de rute salvate; Edit profile / Delete account.
-- [x] Backend: PostgreSQL în Docker, auth JWT (register/login/me), rute salvate pe cont.
-- [ ] Backend: locuri salvate, generare rută (Overpass + rutare pe jos), replan, recunoaștere.
+- [x] Backend: PostgreSQL în Docker, auth JWT (register/login/me), rute și locuri salvate pe cont.
+- [x] Filtru în Saved (All / Routes / Places), alegerea orașului (GPS + listă), EN + RO.
+- [ ] Generare rută din backend (Overpass + rutare pe jos) pentru orice oraș.
+- [ ] Agentul AI (ultimul): alegerea opririlor, povești, replan, recunoaștere clădiri.
 - [ ] Agentul AI cu unelte OSM (Overpass pentru locuri, motor de rutare pe jos).
 - [ ] Social: share rute, feed For you / Friends.

@@ -1,14 +1,8 @@
 import type { LucideIcon } from 'lucide-react-native';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type GestureResponderEvent,
-} from 'react-native';
+import { ActivityIndicator, Pressable, Text, View, type GestureResponderEvent } from 'react-native';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 
 type Props = {
   title: string;
@@ -27,6 +21,8 @@ export function Button({
   loading,
   disabled,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const isDisabled = disabled || loading;
   const fg = variant === 'primary' ? colors.onPrimary : colors.primary;
 
@@ -58,7 +54,7 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   base: {
     height: 52,
     borderRadius: radius.md,
@@ -75,4 +71,4 @@ const styles = StyleSheet.create({
   textPressed: { opacity: 0.6 },
   disabled: { opacity: 0.45 },
   label: { fontFamily: fonts.semibold, fontSize: fontSize.md },
-});
+}));

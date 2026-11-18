@@ -2,10 +2,10 @@ import { ArrowLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-
-import { colors } from '@/constants/theme';
+import { useTheme } from '@/context/theme';
 
 export function BackButton() {
+  const { colors } = useTheme();
   const { t } = useTranslation();
   return (
     <Pressable

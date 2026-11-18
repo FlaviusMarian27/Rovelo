@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { Text, View, type GestureResponderEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
 import { FooterLink } from '@/components/ui/footer-link';
 import { Input } from '@/components/ui/input';
-import { colors, fonts, fontSize, spacing } from '@/constants/theme';
+import { fonts, fontSize, spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { makeStyles } from '@/context/theme';
 import { touchPoint, useTransition } from '@/context/transition';
 import { isValidEmail, MIN_PASSWORD } from '@/utils/validation';
 
@@ -20,6 +21,7 @@ type Errors = {
 };
 
 export default function RegisterScreen() {
+  const styles = useStyles();
   const { t } = useTranslation();
   const { signUp, startSession } = useSession();
   const { enter } = useTransition();
@@ -119,8 +121,8 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: { flexDirection: 'row', gap: spacing.md },
   half: { flex: 1 },
   formError: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.error },
-});
+}));

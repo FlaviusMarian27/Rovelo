@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, type GestureResponderEvent } from 'react-native';
+import { Alert, Pressable, Text, type GestureResponderEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthForm } from '@/components/ui/auth-form';
 import { Button } from '@/components/ui/button';
 import { FooterLink } from '@/components/ui/footer-link';
 import { Input } from '@/components/ui/input';
-import { colors, fonts, fontSize } from '@/constants/theme';
+import { fonts, fontSize } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { makeStyles } from '@/context/theme';
 import { touchPoint, useTransition } from '@/context/transition';
 import { isValidEmail } from '@/utils/validation';
 
 export default function LoginScreen() {
+  const styles = useStyles();
   const { t } = useTranslation();
   const { signIn, startSession } = useSession();
   const { enter } = useTransition();
@@ -86,8 +88,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   forgot: { alignSelf: 'flex-end', marginTop: -8 },
   forgotText: { fontFamily: fonts.medium, fontSize: fontSize.sm, color: colors.primary },
   formError: { fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.error },
-});
+}));

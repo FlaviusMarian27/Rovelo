@@ -4,7 +4,8 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 
 export type MenuItem = {
   label: string;
@@ -16,6 +17,8 @@ export type MenuItem = {
 type Props = { visible: boolean; onClose: () => void; items: MenuItem[]; top?: number };
 
 export function Menu({ visible, onClose, items, top = 64 }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   return (
@@ -51,7 +54,7 @@ export function Menu({ visible, onClose, items, top = 64 }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   menu: {
     position: 'absolute',
     right: spacing.md,
@@ -74,4 +77,4 @@ const styles = StyleSheet.create({
   },
   itemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
   label: { fontFamily: fonts.medium, fontSize: fontSize.sm + 1 },
-});
+}));

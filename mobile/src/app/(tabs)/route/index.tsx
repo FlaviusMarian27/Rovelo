@@ -13,7 +13,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { Fragment, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import ReorderableList, { reorderItems, useReorderableDrag } from 'react-native-reorderable-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -21,12 +21,15 @@ import { useTranslation } from 'react-i18next';
 import { RouteMap, type RouteMapHandle } from '@/components/route/route-map';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
 import { useRoute } from '@/context/route';
+import { makeStyles, useTheme } from '@/context/theme';
 import type { Leg, Route, Stop } from '@/types';
 import { formatMinutes } from '@/utils/geo';
 
 export default function RouteScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { activeRoute, walk, suggestedRoute, isRouteSaved, toggleSavedRoute } = useRoute();
   const mapRef = useRef<RouteMapHandle>(null);
@@ -125,6 +128,7 @@ export default function RouteScreen() {
 }
 
 function RouteSummary({ route: r }: { route: Route }) {
+  const styles = useStyles();
   const { t } = useTranslation();
   return (
     <>
@@ -148,6 +152,8 @@ function EditStops({
   suggested: Route | null;
   onDone: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const { setStops, resetToSuggested } = useRoute();
   const changed = !!suggested && suggested.id !== r.id;
@@ -212,6 +218,8 @@ function EditStopRow({
   canRemove: boolean;
   onRemove: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const drag = useReorderableDrag();
   return (
@@ -251,6 +259,8 @@ function EditStopRow({
 type StopRowProps = { stop: Stop; index: number; active: boolean; onPress: () => void };
 
 function StopRow({ stop, index, active, onPress }: StopRowProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   return (
     <Pressable
@@ -279,6 +289,8 @@ function StopRow({ stop, index, active, onPress }: StopRowProps) {
 }
 
 function LegRow({ leg }: { leg: Leg }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   return (
     <View style={styles.leg}>
@@ -289,7 +301,7 @@ function LegRow({ leg }: { leg: Leg }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   headerRow: {
@@ -392,4 +404,4 @@ const styles = StyleSheet.create({
   diffWorse: { color: colors.text },
   reset: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   resetText: { fontFamily: fonts.semibold, fontSize: fontSize.sm, color: colors.primary },
-});
+}));

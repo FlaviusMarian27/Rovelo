@@ -1,9 +1,10 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 
 type Props = TextInputProps & {
   label: string;
@@ -15,6 +16,8 @@ type Props = TextInputProps & {
 };
 
 export function Input({ label, hint, error, password, prefix, style, ...rest }: Props) {
+  const { colors, scheme } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(true);
@@ -31,6 +34,7 @@ export function Input({ label, hint, error, password, prefix, style, ...rest }: 
         ]}>
         {!!prefix && <Text style={styles.prefix}>{prefix}</Text>}
         <TextInput
+          keyboardAppearance={scheme} // iOS: tastatură închisă pe tema dark
           {...rest}
           style={[styles.input, rest.multiline && styles.inputMultiline, style]}
           textAlignVertical={rest.multiline ? 'top' : rest.textAlignVertical}
@@ -69,7 +73,7 @@ export function Input({ label, hint, error, password, prefix, style, ...rest }: 
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrapper: { gap: spacing.sm },
   label: {
     fontFamily: fonts.medium,
@@ -105,4 +109,4 @@ const styles = StyleSheet.create({
   inputMultiline: { height: undefined, minHeight: 104, paddingVertical: spacing.md - 2 },
   hint: { fontFamily: fonts.regular, fontSize: fontSize.xs, color: colors.textSecondary },
   error: { fontFamily: fonts.regular, fontSize: fontSize.xs, color: colors.error },
-});
+}));

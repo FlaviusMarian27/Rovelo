@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { colors } from '@/constants/theme';
+import { lightColors } from '@/constants/theme';
 
 const SIZE = 140; // egal cu imageWidth din app.json (expo-splash-screen)
 
@@ -111,9 +111,10 @@ function Step({ source, progress }: { source: number; progress: SharedValue<numb
   return <Animated.Image source={source} style={[styles.layer, style]} />;
 }
 
+// Roșul brandului, la fel ca splash-ul nativ (app.json), indiferent de temă.
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.primary,
+    backgroundColor: lightColors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,

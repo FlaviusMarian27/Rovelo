@@ -1,9 +1,10 @@
 // Dropdown simplu: câmpul din Figma ("My location (GPS)") + listă care se deschide dedesubt.
 import { Check, ChevronDown, Crosshair, MapPin } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 import type { StartPoint } from '@/types';
 
 type Props = {
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function StartSelect({ options, value, onChange }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const [open, setOpen] = useState(false);
   const Icon = value.isGps ? Crosshair : MapPin;
 
@@ -57,7 +60,7 @@ export function StartSelect({ options, value, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   field: {
     height: 56,
     flexDirection: 'row',
@@ -89,4 +92,4 @@ const styles = StyleSheet.create({
   optionPressed: { backgroundColor: colors.surface },
   optionText: { fontFamily: fonts.regular, fontSize: fontSize.md, color: colors.text },
   optionSelected: { fontFamily: fonts.medium, color: colors.primary },
-});
+}));

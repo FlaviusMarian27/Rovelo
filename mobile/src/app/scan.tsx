@@ -11,10 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { colors, fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { fonts, fontSize, radius, spacing } from '@/constants/theme';
+import { makeStyles, useTheme } from '@/context/theme';
 import { recognizeLandmark } from '@/services/agent';
 
 export default function ScanScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
@@ -131,6 +134,8 @@ function IconButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       onPress={onPress}
@@ -143,7 +148,7 @@ function IconButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: { flex: 1, backgroundColor: '#000' },
   dim: { backgroundColor: 'rgba(0,0,0,0.15)' },
   overlay: { flex: 1, paddingHorizontal: spacing.lg },
@@ -211,4 +216,4 @@ const styles = StyleSheet.create({
   shutterInner: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.onPrimary },
   permission: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   permissionButtons: { alignSelf: 'stretch', gap: spacing.md - 4, marginTop: spacing.lg },
-});
+}));
