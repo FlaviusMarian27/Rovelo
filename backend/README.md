@@ -24,6 +24,17 @@ cd backend
 Scriptul pornește apoi serverul ca de obicei. Fișierele OSM stau în `backend/data/` (nu intră în git).
 Verificare: `docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select kind, count(*) from places group by kind;'`
 
+## Rutare pe jos (drumul pe străzi)
+Minutele și metrii dintre opriri și linia de pe hartă vin de la OSRM. Întâi încearcă serverul
+nostru din Docker, apoi pe cel public al comunității OSM. Dacă niciunul nu merge, aplicația
+păstrează estimarea (linie dreaptă × 1.3).
+
+```bash
+cd backend
+./scripts/prepare-routing.sh        # o singură dată, ~10–15 min (folosește harta de la import-places)
+docker compose up -d osrm           # apoi pornește odată cu baza: docker compose start
+```
+
 ## Endpoint-uri
 | Metodă | Cale                  | Auth   | Ce face                                        |
 |--------|-----------------------|--------|------------------------------------------------|
@@ -35,6 +46,7 @@ Verificare: `docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select kind,
 | PUT    | `/api/me/preferences` | Bearer | `{theme: system\|light\|dark}` → contul actualizat |
 | DELETE | `/api/me`             | Bearer | șterge contul (și rutele salvate)              |
 | POST   | `/api/routes/generate` | –     | `{start:{latitude,longitude}, duration: 1h\|2h\|3h+, interests:[...]}` → `{stops:[{id,name,kind,coord,visitMinutes}], totalMinutes}` (locuri reale din OpenStreetMap) |
+| POST   | `/api/routes/walk`    | –      | `{points:[coord,...]}` → `{legs:[{meters,walkMinutes}], path, waypoints}` (drumul pe jos, OSRM) |
 | GET    | `/api/routes`         | Bearer | rutele salvate, cele mai noi primele           |
 | POST   | `/api/routes`         | Bearer | body = ruta (JSON) → `{id, savedAt, route}`    |
 | DELETE | `/api/routes/{id}`    | Bearer | șterge o rută salvată (doar a ta)              |

@@ -71,7 +71,9 @@ export type Route = {
   pace: string;
   stops: Stop[];
   legs: Leg[]; // stops.length - 1 elemente
-  path: Coord[]; // linia de desenat pe hartă
+  path: Coord[]; // linia de desenat pe hartă (pe străzi, dacă `streets`)
+  streets?: boolean; // true = legs și path vin de la motorul de rutare, nu din estimare
+  waypoints?: Coord[]; // punctul de pe stradă de lângă fiecare oprire (cu `streets`)
   totalMinutes: number; // opriri + mers
   distanceKm: number;
   tags?: string[]; // interesele pentru care a fost făcută (ex. Architecture, History)

@@ -23,9 +23,10 @@ import {
   type PlaceSnapshot,
 } from '@/services/places-api';
 import { planRoute } from '@/services/planner-api';
+import { fetchWalk } from '@/services/walk-api';
 import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
 import type { Coord, Route, Stop, WalkPreferences } from '@/types';
-import { buildRoute } from '@/utils/geo';
+import { buildRoute, withStreets } from '@/utils/geo';
 import i18n from '@/i18n';
 
 // Aceeași rută cu altă listă / ordine de opriri. Id-ul depinde de ordine,
@@ -199,6 +200,28 @@ export function RouteProvider({ children }: PropsWithChildren) {
       );
     }
   }
+
+  // Drumul real pe străzi: după fiecare schimbare de opriri (generare, reordonare, Add to route,
+  // replan, rută salvată veche) cerem traseul de la backend. Până vine, rămâne estimarea.
+  useEffect(() => {
+    const route = activeRoute;
+    if (!route || route.streets || route.stops.length < 2) return;
+    let cancelled = false;
+    fetchWalk(
+      route.stops.map((s) => s.coord),
+      online ? token : null,
+    )
+      .then((walk) => {
+        if (cancelled) return;
+        const better = withStreets(route, walk);
+        setActiveRoute((cur) => (cur?.id === route.id ? better : cur));
+        setSuggestedRoute((cur) => (cur?.id === route.id ? better : cur));
+      })
+      .catch(() => {}); // fără rutare → rămâne estimarea, aplicația merge mai departe
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRoute, online, token]);
 
   async function generateRoute(prefs: WalkPreferences) {
     setGenerating(true);

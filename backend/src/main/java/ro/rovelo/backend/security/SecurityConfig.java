@@ -52,8 +52,8 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/health", "/api/auth/**", "/error").permitAll()
-                        // generarea de rute merge și pentru guest
-                        .requestMatchers(HttpMethod.POST, "/api/routes/generate").permitAll()
+                        // generarea de rute și drumul pe jos merg și pentru guest
+                        .requestMatchers(HttpMethod.POST, "/api/routes/generate", "/api/routes/walk").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()));
         return http.build();

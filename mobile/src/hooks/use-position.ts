@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 
 import type { Coord, Route } from '@/types';
-import { distanceMeters, lerp } from '@/utils/geo';
+import { distanceMeters, lerp, stopPathIndices } from '@/utils/geo';
 
 export type GpsStatus = 'idle' | 'asking' | 'denied' | 'ok' | 'error';
 
@@ -63,8 +63,11 @@ export function useSimulatedPosition(route: Route, enabled: boolean, fromStop = 
       return;
     }
     const path = route.path;
-    // path = punctele opririlor deocamdată → indexul opririi = indexul în path
-    const seg = Math.min(Math.max(0, startRef.current), path.length - 1);
+    // unde e fiecare oprire pe drum (la drumul pe străzi, path are multe puncte între opriri)
+    const stopIdx = stopPathIndices(route);
+    const stopVertices = new Set(stopIdx);
+    const from = Math.min(Math.max(0, startRef.current), stopIdx.length - 1);
+    const seg = Math.min(stopIdx[from] ?? 0, path.length - 1);
     state.current = { seg, meters: 0, pauseUntil: Date.now() + 1500 };
     setPosition(path[seg]);
 
@@ -80,8 +83,8 @@ export function useSimulatedPosition(route: Route, enabled: boolean, fromStop = 
       if (s.meters >= len) {
         s.seg += 1;
         s.meters = 0;
-        // path = punctele opririlor deocamdată → fiecare vârf e o oprire
-        s.pauseUntil = Date.now() + DEMO_PAUSE_MS;
+        // stai puțin doar când ajungi la o oprire, nu la fiecare colț de stradă
+        if (stopVertices.has(s.seg)) s.pauseUntil = Date.now() + DEMO_PAUSE_MS;
         setPosition(b);
       } else {
         setPosition(lerp(a, b, s.meters / len));

@@ -45,11 +45,11 @@ public class PlaceImporter implements ApplicationRunner {
 
     /** O linie din fișier = un obiect GeoJSON (Feature). */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Feature(Object id, Geometry geometry, Map<String, Object> properties) {}
+    public record Feature(Object id, Geometry geometry, Map<String, Object> properties) {}
 
     /** coordinates = [lon, lat] la punct, liste de liste la linii / poligoane. */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Geometry(String type, Object coordinates) {}
+    public record Geometry(String type, Object coordinates) {}
 
     private final JdbcTemplate jdbc;
     private final JsonMapper json = JsonMapper.builder()

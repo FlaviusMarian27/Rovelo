@@ -34,10 +34,52 @@ export function buildRoute(
     ...meta,
     stops,
     legs,
-    path: stops.map((s) => s.coord), // linie dreaptă între opriri; backend-ul va da drumul pe străzi
+    path: stops.map((s) => s.coord), // linie dreaptă; drumul pe străzi vine apoi (withStreets)
     totalMinutes: walk + visit,
     distanceKm: Math.round(meters / 100) / 10,
   };
+}
+
+// Aceeași rută, cu drumul real pe străzi (de la backend). Totalurile se recalculează.
+export function withStreets(
+  route: Route,
+  walk: { legs: Leg[]; path: Coord[]; waypoints: Coord[] },
+): Route {
+  if (walk.legs.length !== route.stops.length - 1 || walk.path.length < 2) return route;
+  const walkMin = walk.legs.reduce((t, l) => t + l.walkMinutes, 0);
+  const visit = route.stops.reduce((t, s) => t + s.visitMinutes, 0);
+  const meters = walk.legs.reduce((t, l) => t + l.meters, 0);
+  return {
+    ...route,
+    legs: walk.legs,
+    path: walk.path,
+    waypoints: walk.waypoints.length === route.stops.length ? walk.waypoints : undefined,
+    streets: true,
+    totalMinutes: walkMin + visit,
+    distanceKm: Math.round(meters / 100) / 10,
+  };
+}
+
+// Pentru fiecare oprire, indexul punctului din `path` unde ajungi la ea.
+// Fără drum pe străzi, path = opririle, deci indexul e chiar i.
+export function stopPathIndices(route: Route): number[] {
+  if (!route.streets) return route.stops.map((_, i) => i);
+  const targets = route.waypoints ?? route.stops.map((s) => s.coord);
+  let from = 0;
+  return targets.map((target, k) => {
+    if (k === 0) return 0;
+    let best = from;
+    let bestD = Infinity;
+    for (let i = from; i < route.path.length; i++) {
+      const d = distanceMeters(route.path[i], target);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    from = best;
+    return best;
+  });
 }
 
 // Direcția de la a spre b, în grade (0 = nord, 90 = est).

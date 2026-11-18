@@ -1,4 +1,4 @@
-# PostgreSQL pentru dezvoltare locală.
+# PostgreSQL + rutare pe jos (OSRM) pentru dezvoltare locală.
 # Pornește: docker compose up -d     Oprește: docker compose down
 # Datele rămân în volumul "rovelo-db" și după restart.
 # User / parolă / nume DB vin din fișierul .env (copiat din .env.example, NU intră în git).
@@ -20,6 +20,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Rutare pe jos (OSRM), din harta României pregătită cu scripts/prepare-routing.sh.
+  # Doar pe laptop (127.0.0.1): telefonul vorbește cu backend-ul, nu direct cu OSRM.
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    container_name: rovelo-osrm
+    command: osrm-routed --algorithm mld /data/romania-latest.osrm
+    volumes:
+      - ./data/osm:/data
+    ports:
+      - "127.0.0.1:5000:5000"
+    restart: "no" # fără fișierele pregătite nu are ce porni; nu-l lăsăm în buclă
 
 volumes:
   rovelo-db:

@@ -23,6 +23,12 @@ rovelo:
       https://overpass.private.coffee/api/interpreter,
       https://overpass.kumi.systems/api/interpreter,
       https://maps.mail.ru/osm/tools/overpass/api/interpreter
+  # Rutare pe jos (OSRM): întâi containerul nostru (docker compose, vezi scripts/prepare-routing.sh),
+  # apoi serverul public al comunității OpenStreetMap.
+  osrm:
+    urls: >-
+      http://localhost:5000/route/v1/foot,
+      https://routing.openstreetmap.de/routed-foot/route/v1/foot
   jwt:
     secret: ${JWT_SECRET}
     # cât e valabil un token după login (după aceea trebuie login din nou)

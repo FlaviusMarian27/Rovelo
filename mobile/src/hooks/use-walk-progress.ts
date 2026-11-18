@@ -20,7 +20,13 @@ export function useWalkProgress(route: Route, walk: WalkState, position: Coord |
 
   useEffect(() => {
     if (!position || walk.phase === 'finished') return;
-    const d = distanceMeters(position, target.coord);
+    // ai ajuns = lângă loc SAU lângă punctul de pe stradă din fața lui (clădirile mari / parcurile
+    // au centrul departe de stradă)
+    const entrance = route.waypoints?.[index];
+    const d = Math.min(
+      distanceMeters(position, target.coord),
+      entrance ? distanceMeters(position, entrance) : Infinity,
+    );
     if (walk.phase === 'walking' && d <= ARRIVE_M) arrive();
     // a plecat de la oprire fără să apese Continue → trecem automat mai departe
     if (walk.phase === 'arrived' && d > LEAVE_M) nextStop();
