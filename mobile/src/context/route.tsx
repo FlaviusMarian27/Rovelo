@@ -3,7 +3,7 @@
 // (ex. deschizi camera sau povestea unui loc și te întorci).
 //
 // Rutele salvate stau pe server (pentru cont); pentru Guest doar în memorie.
-// generateRoute / replan întorc încă mock-uri; mai târziu și ele vin din backend.
+// generateRoute vine din backend (locuri reale din OpenStreetMap); replan e încă local.
 import {
   createContext,
   useContext,
@@ -12,23 +12,41 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import * as Location from 'expo-location';
 import { Alert } from 'react-native';
 
 import { useSession } from '@/context/session';
-import { interests, mockRouteFor } from '@/data/mock';
 import {
   deleteSavedPlace,
   listSavedPlaces,
   savePlace,
   type PlaceSnapshot,
 } from '@/services/places-api';
+import { planRoute } from '@/services/planner-api';
 import { deleteSavedRoute, listSavedRoutes, saveRoute } from '@/services/routes-api';
-import type { Route, Stop, WalkPreferences } from '@/types';
+import type { Coord, Route, Stop, WalkPreferences } from '@/types';
 import { buildRoute } from '@/utils/geo';
 import i18n from '@/i18n';
 
 // Aceeași rută cu altă listă / ordine de opriri. Id-ul depinde de ordine,
 // deci o rută editată e altă rută (și harta se reîncadrează).
+// De unde pornește ruta: punctul ales sau, la "Locația mea", GPS-ul (altfel centrul orașului).
+async function startCoord(prefs: WalkPreferences): Promise<Coord> {
+  if (prefs.start.coord) return prefs.start.coord;
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status === 'granted') {
+      const pos =
+        (await Location.getLastKnownPositionAsync({ maxAge: 5 * 60_000 })) ??
+        (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+      return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+    }
+  } catch {
+    // fără GPS → centrul orașului
+  }
+  return prefs.city.coord;
+}
+
 function withStops(route: Route, stops: Stop[]): Route {
   const { title, duration, pace, tags } = route;
   const base = route.id.split(':')[0];
@@ -63,7 +81,8 @@ const newWalk = (routeId: string): WalkState => ({
 type RouteState = {
   activeRoute: Route | null;
   generating: boolean;
-  generateRoute: (prefs: WalkPreferences) => Promise<Route>;
+  /** null = n-a mers (eroarea e deja afișată). */
+  generateRoute: (prefs: WalkPreferences) => Promise<Route | null>;
   clearRoute: () => void;
   /** Înlocuiește ruta (după Replan / Add to route) fără să piardă progresul. */
   replaceRoute: (route: Route) => void;
@@ -183,12 +202,38 @@ export function RouteProvider({ children }: PropsWithChildren) {
 
   async function generateRoute(prefs: WalkPreferences) {
     setGenerating(true);
-    await new Promise((r) => setTimeout(r, 1200)); // simulează "agentul gândește"
-    const tags = prefs.interests.map((i) => interests.find((x) => x.id === i)?.label ?? i);
-    const route = { ...mockRouteFor(prefs.duration), tags };
-    openRoute(route);
-    setGenerating(false);
-    return route;
+    try {
+      const start = await startCoord(prefs);
+      const plan = await planRoute(
+        { start, duration: prefs.duration, interests: prefs.interests },
+        online ? token : null,
+      );
+      const stops: Stop[] = plan.stops.map((s) => ({
+        id: s.id,
+        name: s.name,
+        kind: s.kind,
+        blurb: i18n.t(`kinds.${s.kind}`, { defaultValue: '' }),
+        coord: s.coord,
+        visitMinutes: s.visitMinutes,
+      }));
+      const route = buildRoute(
+        {
+          id: `gen-${Date.now()}`,
+          title: i18n.t('route.generatedTitle', { city: prefs.city.name }),
+          duration: prefs.duration,
+          pace: i18n.t('route.pace'),
+          tags: prefs.interests.map((i) => i18n.t(`interests.${i}`)),
+        },
+        stops,
+      );
+      openRoute(route);
+      return route;
+    } catch (e) {
+      Alert.alert(i18n.t('route.generateFailed'), e instanceof Error ? e.message : '');
+      return null;
+    } finally {
+      setGenerating(false);
+    }
   }
 
   function openRoute(route: Route) {

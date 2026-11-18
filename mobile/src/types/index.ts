@@ -53,6 +53,7 @@ export type Stop = {
   blurb: string;
   coord: Coord;
   visitMinutes: number; // cât stai la oprire
+  kind?: string; // tipul din OpenStreetMap ("cafe", "museum"…), la rutele generate
 };
 
 // Drumul dintre două opriri consecutive (stops[i] → stops[i + 1]).

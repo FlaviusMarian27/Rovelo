@@ -1,5 +1,6 @@
 // Place story: poza (cea făcută de tine, dacă vii din Scan), povestea locului,
 // "Add to route" și "Save". Stă în tab-ul Route, deci Back te duce de unde ai venit.
+// Locurile din rutele generate (OpenStreetMap) n-au încă poveste; o va scrie agentul AI.
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -31,11 +32,12 @@ export default function PlaceScreen() {
   const styles = useStyles();
   const { t } = useTranslation();
   const { id, photo } = useLocalSearchParams<{ id: string; photo?: string }>();
-  const { activeRoute, addStop, isPlaceSaved, toggleSavedPlace } = useRoute();
-  const place = findPlace(id);
-  const story = placeStories[id];
+  const { activeRoute, addStop, isPlaceSaved, toggleSavedPlace, savedPlaces } = useRoute();
+  const savedSnapshot = savedPlaces.find((p) => p.id === id);
+  const place = findPlace(id) ?? activeRoute?.stops.find((s) => s.id === id) ?? savedSnapshot;
+  const story = placeStories[id] ?? savedSnapshot?.story;
 
-  if (!place || !story) {
+  if (!place) {
     return (
       <SafeAreaView style={styles.safe}>
         <EmptyState
@@ -62,7 +64,11 @@ export default function PlaceScreen() {
   }
 
   const onShare = () =>
-    Share.share({ message: `${place.name} (${story.area})\n\n${story.story}\n\n— via Rovelo` });
+    Share.share({
+      message: story
+        ? `${place.name} (${story.area})\n\n${story.story}\n\n— via Rovelo`
+        : `${place.name}\n\n— via Rovelo`,
+    });
 
   return (
     <View style={styles.safe}>
@@ -86,19 +92,27 @@ export default function PlaceScreen() {
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.category}>{story.category.toUpperCase()}</Text>
+          {!!(story?.category || place.blurb) && (
+            <Text style={styles.category}>{(story?.category ?? place.blurb).toUpperCase()}</Text>
+          )}
           <Text style={styles.title}>{place.name}</Text>
-          <View style={styles.areaRow}>
-            <MapPin size={16} color={colors.textSecondary} strokeWidth={1.75} />
-            <Text style={styles.area}>{story.area}</Text>
-          </View>
+          {story ? (
+            <>
+              <View style={styles.areaRow}>
+                <MapPin size={16} color={colors.textSecondary} strokeWidth={1.75} />
+                <Text style={styles.area}>{story.area}</Text>
+              </View>
 
-          <Text style={styles.story}>{story.story}</Text>
+              <Text style={styles.story}>{story.story}</Text>
 
-          <View style={styles.tipRow}>
-            <Sun size={18} color={colors.textSecondary} strokeWidth={1.75} />
-            <Text style={styles.tip}>{story.tip}</Text>
-          </View>
+              <View style={styles.tipRow}>
+                <Sun size={18} color={colors.textSecondary} strokeWidth={1.75} />
+                <Text style={styles.tip}>{story.tip}</Text>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.storySoon}>{t('place.storySoon')}</Text>
+          )}
         </View>
       </ScrollView>
 
@@ -115,7 +129,7 @@ export default function PlaceScreen() {
           title={saved ? t('place.saved') : t('place.save')}
           icon={saved ? BookmarkCheck : Bookmark}
           variant="outline"
-          onPress={() => toggleSavedPlace({ ...place, story })}
+          onPress={() => toggleSavedPlace(story ? { ...place, story } : place)}
         />
       </SafeAreaView>
     </View>
@@ -200,6 +214,14 @@ const useStyles = makeStyles((colors) => ({
     fontSize: fontSize.md,
     lineHeight: 25,
     color: colors.textSecondary,
+  },
+  storySoon: {
+    marginTop: spacing.lg,
+    fontFamily: fonts.regular,
+    fontSize: fontSize.sm,
+    lineHeight: 21,
+    color: colors.textMuted,
+    fontStyle: 'italic',
   },
   tipRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg },
   tip: { flex: 1, fontFamily: fonts.regular, fontSize: fontSize.sm, color: colors.textSecondary },

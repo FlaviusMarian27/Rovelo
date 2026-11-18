@@ -7,14 +7,17 @@ export type PlaceSnapshot = Stop & { story?: PlaceStory };
 
 export type SavedPlaceEntry = { key: string; savedAt: string; place: PlaceSnapshot };
 
+/** Cheia din URL: id-urile OSM au "/" ("osm:way/123"), pe care serverul nu-l acceptă în cale. */
+const placeKey = (id: string) => encodeURIComponent(id.replace(/\//g, '_'));
+
 export const listSavedPlaces = (token: string) => api<SavedPlaceEntry[]>('/api/places', { token });
 
 export const savePlace = (token: string, place: PlaceSnapshot) =>
-  api<SavedPlaceEntry>(`/api/places/${encodeURIComponent(place.id)}`, {
+  api<SavedPlaceEntry>(`/api/places/${placeKey(place.id)}`, {
     method: 'PUT',
     token,
     body: place,
   });
 
-export const deleteSavedPlace = (token: string, key: string) =>
-  api<void>(`/api/places/${encodeURIComponent(key)}`, { method: 'DELETE', token });
+export const deleteSavedPlace = (token: string, id: string) =>
+  api<void>(`/api/places/${placeKey(id)}`, { method: 'DELETE', token });

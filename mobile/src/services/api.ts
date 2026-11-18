@@ -9,6 +9,8 @@ const SERVER_MESSAGES: Record<string, string> = {
   'Wrong email or password.': 'errors.wrongCredentials',
   'An account with this email already exists.': 'errors.emailTaken',
   'This nickname is already taken.': 'errors.nicknameTaken',
+  'The map service is busy. Try again in a moment.': 'errors.mapBusy',
+  'Not enough interesting places nearby.': 'errors.noPlacesNearby',
 };
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
@@ -28,15 +30,19 @@ type Options = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
   token?: string | null;
+  timeoutMs?: number;
 };
 
-export async function api<T>(path: string, { method = 'GET', body, token }: Options = {}) {
+export async function api<T>(
+  path: string,
+  { method = 'GET', body, token, timeoutMs = TIMEOUT_MS }: Options = {},
+) {
   if (!BASE_URL) {
     throw new ApiError(i18n.t('errors.apiUrlMissing'), 0);
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
   try {

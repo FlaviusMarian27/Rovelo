@@ -25,7 +25,7 @@ import { fonts, fontSize, spacing } from '@/constants/theme';
 import { useCity } from '@/context/city';
 import { useRoute } from '@/context/route';
 import { makeStyles, useTheme } from '@/context/theme';
-import { startPointsFor, TEST_CITY_ID } from '@/data/cities';
+import { startPointsFor } from '@/data/cities';
 import { durations, interests } from '@/data/mock';
 import type { Duration, Interest, StartPoint } from '@/types';
 
@@ -54,15 +54,12 @@ export default function HomeScreen() {
     setStart(startPointsFor(city)[0]);
   }, [city]);
 
-  // Rutele mock există doar pentru Timișoara; în rest le va genera backend-ul.
-  const cityReady = city.id === TEST_CITY_ID;
-
   const toggle = (id: Interest) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   async function onGenerate() {
-    await generateRoute({ city, duration, interests: selected, start });
-    router.navigate('/route');
+    const route = await generateRoute({ city, duration, interests: selected, start });
+    if (route) router.navigate('/route');
   }
 
   return (
@@ -109,18 +106,14 @@ export default function HomeScreen() {
 
       <View style={styles.bottom}>
         <Text style={styles.note}>
-          {!cityReady
-            ? t('home.noteCity', { city: city.name })
-            : selected.length
-              ? t('home.noteReady')
-              : t('home.noteNoInterest')}
+          {selected.length ? t('home.noteReady') : t('home.noteNoInterest')}
         </Text>
         <Button
           title={generating ? t('home.generating') : t('home.generate')}
           icon={Sparkles}
           onPress={onGenerate}
           loading={generating}
-          disabled={!selected.length || !cityReady}
+          disabled={!selected.length}
         />
       </View>
 

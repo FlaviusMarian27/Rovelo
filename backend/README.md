@@ -11,6 +11,19 @@ mvn spring-boot:run         # pornește serverul pe portul 8080
 ```
 `JWT_SECRET`: minim 32 de caractere, ex. `openssl rand -base64 48`.
 
+## Locurile din OpenStreetMap (pentru generarea de rute)
+Generarea de rute caută locuri (muzee, biserici, cafenele, parcuri…) în tabela `places`,
+importată o dată din OpenStreetMap. Pentru zone neimportate încearcă serverele publice Overpass,
+care sunt adesea lente sau ocupate.
+
+```bash
+sudo apt install osmium-tool        # o singură dată
+cd backend
+./scripts/import-places.sh          # România: descarcă ~300 MB, filtrează, importă
+```
+Scriptul pornește apoi serverul ca de obicei. Fișierele OSM stau în `backend/data/` (nu intră în git).
+Verificare: `docker exec -it rovelo-db psql -U rovelo -d rovelo -c 'select kind, count(*) from places group by kind;'`
+
 ## Endpoint-uri
 | Metodă | Cale                  | Auth   | Ce face                                        |
 |--------|-----------------------|--------|------------------------------------------------|
@@ -21,6 +34,7 @@ mvn spring-boot:run         # pornește serverul pe portul 8080
 | PUT    | `/api/me`             | Bearer | `{firstName, lastName, nickname?, bio?, email}` → contul actualizat |
 | PUT    | `/api/me/preferences` | Bearer | `{theme: system\|light\|dark}` → contul actualizat |
 | DELETE | `/api/me`             | Bearer | șterge contul (și rutele salvate)              |
+| POST   | `/api/routes/generate` | –     | `{start:{latitude,longitude}, duration: 1h\|2h\|3h+, interests:[...]}` → `{stops:[{id,name,kind,coord,visitMinutes}], totalMinutes}` (locuri reale din OpenStreetMap) |
 | GET    | `/api/routes`         | Bearer | rutele salvate, cele mai noi primele           |
 | POST   | `/api/routes`         | Bearer | body = ruta (JSON) → `{id, savedAt, route}`    |
 | DELETE | `/api/routes/{id}`    | Bearer | șterge o rută salvată (doar a ta)              |
@@ -42,6 +56,11 @@ curl http://localhost:8080/api/health
 curl -X POST http://localhost:8080/api/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"firstName":"Flavius","lastName":"Marian","email":"demo@rovelo.app","password":"rovelo123"}'
+
+# generează o rută (merge și fără token), din Piața Victoriei, Timișoara
+curl -X POST http://localhost:8080/api/routes/generate \
+  -H 'Content-Type: application/json' \
+  -d '{"start":{"latitude":45.7537,"longitude":21.2257},"duration":"2h","interests":["architecture","history"]}'
 
 # login → copiază "token" din răspuns
 curl -X POST http://localhost:8080/api/auth/login \
